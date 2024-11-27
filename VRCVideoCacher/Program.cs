@@ -3,19 +3,19 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Templates;
 using Serilog.Templates.Themes;
+using VRCVideoCacher.API;
 using VRCVideoCacher.YTDL;
 
 namespace VRCVideoCacher;
 
-class Program
+static class Program
 {
-    public const string ytdlphash = "T1bpnlIuM0RIxTiu93g01O7fgPhNPzILASdpOhRuXws=";
-    public const string Version = "2024.1.4";
-    public static ILogger Logger = Log.ForContext("SourceContext", "Core");
-    public static void Main(String[] args)
+    public const string ytdlpHash = "tRaaHsCwzCc3t27xEWfOdHGzKhYI+AJCpLfUeWGsCBA=";
+    public const string Version = "2024.11.27";
+    public static readonly ILogger Logger = Log.ForContext("SourceContext", "Core");
+    public static async Task Main(string[] args)
     {
         Console.Title = $"VRCVideoCacher v{Version}";
-        //GetOurYTDLPHash();
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.Console(new ExpressionTemplate(
@@ -28,36 +28,42 @@ class Program
             FileTools.Restore();
             Environment.Exit(0);
         }
-        Console.CancelKeyPress += ConsoleOnCancelKeyPress;
-        ConfigManager.Load();
+        if (Environment.CommandLine.Contains("--Hash"))
+        {
+            GetOurYTDLPHash();
+            Environment.Exit(0);
+        }
+        Console.CancelKeyPress += (_, _) => ConsoleOnCancelKeyPress();
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => OnAppQuit();
+        
         FileTools.BackupAndReplaceYTDL();
-        AssetManager.Init();
-        ytdlManager.Init();
+        await ytdlManager.Init();
         WebServer.Init();
-        Task.Delay(-1).GetAwaiter().GetResult();
+        await Task.Delay(-1);
     }
 
-    public static void GetOurYTDLPHash()
+    private static void GetOurYTDLPHash()
     {
-        Console.WriteLine(ComputeBinaryContentHash(File.ReadAllBytes("yt-dlp.exe")));
+        var ytdlStubPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "yt-dlp-stub.exe");
+        Console.WriteLine(ComputeBinaryContentHash(File.ReadAllBytes(ytdlStubPath)));
     }
     
     public static string ComputeBinaryContentHash(byte[] base64)
     {
-        using (SHA256 sha256 = SHA256.Create())
-        {
-            return Convert.ToBase64String(sha256.ComputeHash(base64));
-        }
+        return Convert.ToBase64String(SHA256.HashData(base64));
     }
-    
-    private static void ConsoleOnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+
+    private static void ConsoleOnCancelKeyPress()
     {
-        Logger.Information("Resetting yt-dlp config...");
-        FileTools.Restore();
-        Logger.Information("Exiting...");
+        OnAppQuit();
         Logger.Information("Press any key to continue...");
         Console.ReadKey();
         Environment.Exit(0);
     }
-}
 
+    private static void OnAppQuit()
+    {
+        FileTools.Restore();
+        Logger.Information("Exiting...");
+    }
+}

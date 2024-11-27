@@ -2,49 +2,57 @@
 
 namespace VRCVideoCacher;
 
-public class FileTools
+public static class FileTools
 {
-    public static ILogger Log = Program.Logger.ForContext("SourceContext", "Patcher");
+    private static readonly ILogger Log = Program.Logger.ForContext("SourceContext", "Patcher");
+    private static readonly string _ytdlPath;
+    private static readonly string _backupPath;
+    private static readonly string _ytdlStubPath;
+
+    static FileTools()
+    {
+        _ytdlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\Tools\yt-dlp.exe";
+        _backupPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\Tools\yt-dlp.exe.bkp";
+        _ytdlStubPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "yt-dlp-stub.exe");
+    }
+    
     public static void BackupAndReplaceYTDL()
     {
-        var ytdlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\Tools\yt-dlp.exe";
-        var bkpPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\Tools\yt-dlp.exe.bkp";
-        var hash = Program.ComputeBinaryContentHash(File.ReadAllBytes(ytdlPath));
-        if (hash == Program.ytdlphash)
+        if (File.Exists(_ytdlPath))
         {
-            Log.Information("YT-DLP is already patched.");
-            return;
-        }
-        if (File.Exists(ytdlPath))
-        {
-            if (File.Exists(bkpPath))
+            var hash = Program.ComputeBinaryContentHash(File.ReadAllBytes(_ytdlPath));
+            if (hash == Program.ytdlpHash)
             {
-                File.Delete(bkpPath);
+                Log.Information("YT-DLP is already patched.");
+                return;
             }
-            File.Move(ytdlPath, bkpPath);
+            if (File.Exists(_backupPath))
+            {
+                File.SetAttributes(_backupPath, FileAttributes.Normal);
+                File.Delete(_backupPath);
+            }
+            File.Move(_ytdlPath, _backupPath);
             Log.Information("Backed up YT-DLP.");
         }
-        File.Copy("yt-dlp.exe", ytdlPath);
-        var attr = File.GetAttributes(ytdlPath);
-        attr = attr | FileAttributes.ReadOnly;
-        File.SetAttributes(ytdlPath, attr);
+        File.Copy(_ytdlStubPath, _ytdlPath);
+        var attr = File.GetAttributes(_ytdlPath);
+        attr |= FileAttributes.ReadOnly;
+        File.SetAttributes(_ytdlPath, attr);
         Log.Information("Patched YT-DLP.");
     }
 
     public static void Restore()
     {
-        var ytdlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\Tools\yt-dlp.exe";
-        var bkpPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\Tools\yt-dlp.exe.bkp";
-        if (File.Exists(bkpPath))
+        Log.Information("Restoring yt-dlp...");
+        if (!File.Exists(_backupPath))
+            return;
+        
+        if (File.Exists(_ytdlPath))
         {
-            File.SetAttributes(ytdlPath, FileAttributes.Normal);
-            if (File.Exists(ytdlPath))
-            {
-                File.Delete(ytdlPath);
-            }
-            File.Move(bkpPath, ytdlPath);
-            
-            Log.Information("Restored YT-DLP.");
+            File.SetAttributes(_ytdlPath, FileAttributes.Normal);
+            File.Delete(_ytdlPath);
         }
+        File.Move(_backupPath, _ytdlPath);
+        Log.Information("Restored YT-DLP.");
     }
 }

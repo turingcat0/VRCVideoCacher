@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Text;
 using EmbedIO;
 using EmbedIO.Routing;
@@ -7,52 +8,43 @@ using Serilog;
 using Swan.Logging;
 using VRCVideoCacher.YTDL;
 
-namespace VRCVideoCacher;
+namespace VRCVideoCacher.API;
 
 public class APIController : WebApiController
 {
-    public static Serilog.ILogger Log = Program.Logger.ForContext("SourceContext", "APIController");
+    private static readonly Serilog.ILogger Log = Program.Logger.ForContext("SourceContext", "APIController");
+    
     [Route(HttpVerbs.Get, "/getvideo")]
     public async Task GetVideo()
     {
-        if (ConfigManager.config.RUMode)
+        var requestUrl = Request.QueryString["url"];
+        var avPro = Request.QueryString["avpro"] == "True";
+        var videoInfo = await ytdlManager.GetVideoId(requestUrl);
+        if (videoInfo == null)
         {
-            var url = Request.QueryString["url"];
-            if (url.Contains("na2.vrdancing.club") || url.Contains("eu2.vrdancing.club"))
-            {
-                
-            }
-        }
-        if(ConfigManager.config.EnableCache == false)
-        {
-            await HttpContext.SendStringAsync(ytdlManager.GetURL(Request.QueryString["url"]), "text/plain", Encoding.UTF8);
+            Log.Information("Failed to get Video Info for URL: {URL}", requestUrl);
             return;
         }
-        bool isCached = AssetManager.ApiCacheList.Any(x => x.videoUrl == Request.QueryString["url"]);
-        try
+        var fileName = $"{videoInfo.VideoId}.mp4";
+        var filePath = Path.Combine(ConfigManager.config.CachedAssetPath, fileName);
+        var isCached = File.Exists(filePath);
+
+        var willCache = true;
+        if (isCached)
         {
-            var ytdetails = ytdlManager.GetYTJson(Request.QueryString["url"]);
-            //Jank to get around null ref please excuse the disgrace to dev
-            if (ytdetails != null)
-            {
-                if (ytdetails)
-                {
-                    Log.Information("URL Is Live Stream: Bypassing.");
-                    await HttpContext.SendStringAsync(ytdlManager.GetURL(Request.QueryString["url"]), "text/plain",
-                        Encoding.UTF8);
-                    return;
-                }
-            }
-        }
-        catch
-        {
-            Log.Information("Failed to get Live Stream Status: Bypassing.");
-            await HttpContext.SendStringAsync(ytdlManager.GetURL(Request.QueryString["url"]), "text/plain",
-                Encoding.UTF8);
+            var url = $"{ConfigManager.config.ytdlWebServerURL}{fileName}";
+            Log.Information("Responding with Cached URL: {URL}", url);
+            await HttpContext.SendStringAsync(url, "text/plain", Encoding.UTF8);
             return;
         }
 
-        if (ConfigManager.config.BlockedUrls.Contains(Request.QueryString["url"]))
+        if (string.IsNullOrEmpty(videoInfo.VideoId))
+        {
+            Log.Information("Failed to get Video ID: Bypassing.");
+            willCache = false;
+        }
+
+        if (ConfigManager.config.BlockedUrls.Contains(requestUrl))
         {
             Console.Beep();
             Console.Beep();
@@ -60,24 +52,19 @@ public class APIController : WebApiController
             await HttpContext.SendStringAsync("https://ellyvr.dev/blocked.mp4", "text/plain", Encoding.UTF8);
             return;
         }
-        if (Request.QueryString["url"].StartsWith("https://themightygym-europe.ams3.cdn.digitaloceanspaces.com"))
+        
+        if (requestUrl.StartsWith("https://themightygym-europe.ams3.cdn.digitaloceanspaces.com"))
         {
             Log.Information("URL Is Mighty Gym: Bypassing.");
-            await HttpContext.SendStringAsync(ytdlManager.GetURL(Request.QueryString["url"]), "text/plain", Encoding.UTF8);
-            return;
+            willCache = false;
         }
-        if (isCached)
+        
+        var responseUrl = ytdlManager.GetURL(requestUrl, avPro);
+        Log.Information("Responding with URL: {URL}", responseUrl);
+        await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);
+        if (willCache)
         {
-            string localfile = AssetManager.ApiCacheList.First(x => x.videoUrl == Request.QueryString["url"]).FileName;
-            string url = $"{ConfigManager.config.ytdlWebServerURL}{localfile}";
-            await HttpContext.SendStringAsync(url, "text/plain", Encoding.UTF8);
-            return;
-        }
-        else
-        { 
-            await HttpContext.SendStringAsync(ytdlManager.GetURL(Request.QueryString["url"]), "text/plain", Encoding.UTF8);
-            _ = Task.Run(()=> ytdlManager.DownloadVideo(Request.QueryString["url"]));
-            return;
+            ytdlManager.QueueDownload(videoInfo);
         }
     }
 }

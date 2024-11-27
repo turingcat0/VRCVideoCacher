@@ -6,12 +6,13 @@ using Serilog;
 using Swan.Logging;
 using ILogger = Serilog.ILogger;
 
-namespace VRCVideoCacher;
+namespace VRCVideoCacher.API;
 
-public class WebServer
+public static class WebServer
 {
-    public static EmbedIO.WebServer server;
-    public static ILogger Log = Program.Logger.ForContext("SourceContext", "WebServer");
+    private static EmbedIO.WebServer server;
+    public static readonly ILogger Log = Program.Logger.ForContext("SourceContext", "WebServer");
+    
     public static void Init()
     {
         server = CreateWebServer(ConfigManager.config.ytdlWebServerURL);

@@ -4,6 +4,7 @@ public class GithubAPIResponseJson
 {
     
 }
+
 public class Asset {
     public string url { get; set; }
     public int id { get; set; }
@@ -41,7 +42,7 @@ public class Author {
     public bool site_admin { get; set; }
 }
 
-public class Api {
+public class YtApi {
     public string url { get; set; }
     public string assets_url { get; set; }
     public string upload_url { get; set; }

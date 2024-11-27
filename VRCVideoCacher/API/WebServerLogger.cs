@@ -1,6 +1,6 @@
 ﻿using Swan.Logging;
 
-namespace VRCVideoCacher;
+namespace VRCVideoCacher.API;
 
 public class WebServerLogger : ILogger
 {
