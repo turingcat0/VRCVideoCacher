@@ -313,7 +313,7 @@ public static class ytdlManager
             {
                 FileName = ConfigManager.config.ytdlPath,
                 Arguments =
-                    $"-q -o {_tempDownloadPath} -f bv*[height=1080][vcodec!=av01][vcodec!=vp9.2][ext=mp4]+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2]+ba[ext=m4a] --remux-video mp4 --no-progress -- {videoId}"
+                    $"-q -o {_tempDownloadPath} -f bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http] --no-playlist --remux-video mp4 --no-progress -- {videoId}"
                     // $@"-f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings {url} " %(id)s.%(ext)s
             }
         };
