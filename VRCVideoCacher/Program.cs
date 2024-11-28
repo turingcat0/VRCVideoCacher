@@ -8,7 +8,7 @@ using VRCVideoCacher.YTDL;
 
 namespace VRCVideoCacher;
 
-static class Program
+internal static class Program
 {
     public const string ytdlpHash = "tRaaHsCwzCc3t27xEWfOdHGzKhYI+AJCpLfUeWGsCBA=";
     public const string Version = "2024.11.27";

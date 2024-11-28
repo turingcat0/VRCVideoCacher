@@ -320,9 +320,16 @@ public static class ytdlManager
         p.Start();
         p.WaitForExit();
         Thread.Sleep(10);
-        var filePath = Path.Combine(ConfigManager.config.CachedAssetPath, $"{videoId}.mp4");
+        if (!File.Exists(_tempDownloadPath))
+        {
+            Log.Error("Failed to download YouTube Video: {URL}", url);
+            return;
+        }
+
+        var fileName = $"{videoId}.mp4";
+        var filePath = Path.Combine(ConfigManager.config.CachedAssetPath, fileName);
         File.Move(_tempDownloadPath, filePath);
-        Log.Information("YouTube Video Downloaded: {videoId}", videoId);
+        Log.Information("YouTube Video Downloaded: {URL}", $"{ConfigManager.config.ytdlWebServerURL}{fileName}");
     }
     
     private static async Task DownloadVideoWithId(VideoInfo videoInfo)
@@ -334,14 +341,21 @@ public static class ytdlManager
         }
         Log.Information("Downloading Video: {URL}", videoInfo.VideoUrl);
         var url = videoInfo.VideoUrl;
-        var stream = await _httpClient.GetStreamAsync(url);
+        var response = await _httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+        {
+            Log.Error("Failed to download video: {URL}", url);
+            return;
+        }
+        var stream = await response.Content.ReadAsStreamAsync();
         await using var fileStream = new FileStream(_tempDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None);
         await stream.CopyToAsync(fileStream);
         fileStream.Close();
         await Task.Delay(10);
-        var filePath = Path.Combine(ConfigManager.config.CachedAssetPath, $"{videoInfo.VideoId}.mp4");
+        var fileName = $"{videoInfo.VideoId}.mp4";
+        var filePath = Path.Combine(ConfigManager.config.CachedAssetPath, fileName);
         File.Move(_tempDownloadPath, filePath);
-        Log.Information("Video Downloaded: {videoId}", videoInfo.VideoId);
+        Log.Information("Video Downloaded: {URL}", $"{ConfigManager.config.ytdlWebServerURL}{fileName}");
     }
 
     private static string? TryGetYouTubeVideoId(string url)

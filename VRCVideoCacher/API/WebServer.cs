@@ -15,6 +15,12 @@ public static class WebServer
     
     public static void Init()
     {
+        if (!ConfigManager.config.ytdlWebServerURL.Contains("localhost") &&
+            !ConfigManager.config.ytdlWebServerURL.Contains("127.0.0.1"))
+        {
+            Log.Warning("WebServer in config isn't localhost, not starting local WebServer.");
+            return;
+        }
         server = CreateWebServer(ConfigManager.config.ytdlWebServerURL);
         server.RunAsync();  
     }
