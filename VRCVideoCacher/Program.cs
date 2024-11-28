@@ -39,6 +39,7 @@ internal static class Program
         FileTools.BackupAndReplaceYTDL();
         await ytdlManager.Init();
         WebServer.Init();
+        await BulkPreCache.DownloadFileList();
         await Task.Delay(-1);
     }
 

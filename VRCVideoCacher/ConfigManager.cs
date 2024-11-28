@@ -41,4 +41,5 @@ public class ConfigModel
     public bool CachePyPyDance = true;
     public bool CacheVRDancing = true;
     public bool CacheOther = false;
+    public string[] PreCacheUrls = [];
 }
