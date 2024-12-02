@@ -10,7 +10,7 @@ namespace VRCVideoCacher;
 
 internal static class Program
 {
-    public const string ytdlpHash = "tRaaHsCwzCc3t27xEWfOdHGzKhYI+AJCpLfUeWGsCBA=";
+    public static string ytdlpHash = string.Empty;
     public const string Version = "2024.11.27";
     public static readonly ILogger Logger = Log.ForContext("SourceContext", "Core");
     public static async Task Main(string[] args)
@@ -30,12 +30,13 @@ internal static class Program
         }
         if (Environment.CommandLine.Contains("--Hash"))
         {
-            GetOurYTDLPHash();
+            Console.WriteLine(GetOurYTDLPHash());
             Environment.Exit(0);
         }
         Console.CancelKeyPress += (_, _) => ConsoleOnCancelKeyPress();
         AppDomain.CurrentDomain.ProcessExit += (_, _) => OnAppQuit();
         
+        ytdlpHash = GetOurYTDLPHash();
         FileTools.BackupAndReplaceYTDL();
         await ytdlManager.Init();
         WebServer.Init();
@@ -43,10 +44,15 @@ internal static class Program
         await Task.Delay(-1);
     }
 
-    private static void GetOurYTDLPHash()
+    public static string GetOurYTDLPHash()
     {
         var ytdlStubPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "yt-dlp-stub.exe");
-        Console.WriteLine(ComputeBinaryContentHash(File.ReadAllBytes(ytdlStubPath)));
+        if (!File.Exists(ytdlStubPath))
+        {
+            Logger.Error("yt-dlp-stub.exe not found.");
+            return string.Empty;
+        }
+        return ComputeBinaryContentHash(File.ReadAllBytes(ytdlStubPath));
     }
     
     public static string ComputeBinaryContentHash(byte[] base64)

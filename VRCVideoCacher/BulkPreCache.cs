@@ -48,7 +48,7 @@ public static class BulkPreCache
             var content = await response.Content.ReadAsStringAsync();
             var files = JsonConvert.DeserializeObject<List<DownloadInfo>>(content);
             await DownloadVideos(files);
-            Log.Information("All {files.Count} files for {URL} are up to date.", url, files.Count);
+            Log.Information("All {count} files for {URL} are up to date.", files.Count, url);
         }
     }
 
