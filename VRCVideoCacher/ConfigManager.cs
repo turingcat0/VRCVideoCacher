@@ -40,6 +40,6 @@ public class ConfigModel
     public bool CacheYouTube = true;
     public bool CachePyPyDance = true;
     public bool CacheVRDancing = true;
-    public bool CacheOther = false;
+    // public bool CacheOther = false;
     public string[] PreCacheUrls = [];
 }

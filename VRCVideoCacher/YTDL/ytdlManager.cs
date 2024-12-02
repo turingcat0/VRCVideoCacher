@@ -271,8 +271,8 @@ public static class ytdlManager
                         DownloadVideoWithId(queueItem).Wait();
                     break;
                 case UrlType.Other:
-                    if (ConfigManager.config.CacheOther)
-                        Log.Error("Download type is not supported yet.");
+                    // if (ConfigManager.config.CacheOther)
+                    //     Log.Error("Download type is not supported yet.");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -297,7 +297,7 @@ public static class ytdlManager
         var videoId = TryGetYouTubeVideoId(url);
         if (string.IsNullOrEmpty(videoId))
         {
-            Log.Information("Not downloading video it's either invalid or a stream: {URL}", url);
+            Log.Information("Not downloading video it's either a stream, invalid or over an hour in length: {URL}", url);
             return;
         }
 
@@ -378,7 +378,9 @@ public static class ytdlManager
         if (data is null ||
             data.id is null ||
             data.is_live is true ||
-            data.was_live is true)
+            data.was_live is true ||
+            data.duration is null ||
+            data.duration > 3600)
             return null;
 
         return data.id;
