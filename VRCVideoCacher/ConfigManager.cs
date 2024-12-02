@@ -3,11 +3,12 @@ using Serilog;
 
 namespace VRCVideoCacher;
 
-public class ConfigManager
+public static class ConfigManager
 {
     public static ConfigModel config;
-    public static ILogger Log = Program.Logger.ForContext("SourceContext", "ConfigManager");
-    public static void Load()
+    private static ILogger Log = Program.Logger.ForContext("SourceContext", "ConfigManager");
+    
+    static ConfigManager()
     {
         Log.Information("Loading config...");
         if (!File.Exists("Config.json"))
@@ -23,7 +24,7 @@ public class ConfigManager
         Log.Information("Loaded config.");
     }
 
-    public static void SaveConfig()
+    private static void SaveConfig()
     {
         Log.Information("Saving config...");
         File.WriteAllText("Config.json", JsonConvert.SerializeObject(config, Formatting.Indented));
@@ -33,10 +34,12 @@ public class ConfigManager
 public class ConfigModel
 {
     public string ytdlWebServerURL = "http://localhost:9696/";
-    public string ytdlPath = "Utils/yt-dlp.exe";
+    public string ytdlPath = "Utils/yt-dlp-stub.exe";
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
-    public bool EnableCache = true;
-    public bool RUMode = false;
-    public string RUModeToken = "";
+    public bool CacheYouTube = true;
+    public bool CachePyPyDance = true;
+    public bool CacheVRDancing = true;
+    public bool CacheOther = false;
+    public string[] PreCacheUrls = [];
 }
