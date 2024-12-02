@@ -53,7 +53,7 @@ public class APIController : WebApiController
             return;
         }
         
-        if (requestUrl.StartsWith("https://themightygym-europe.ams3.cdn.digitaloceanspaces.com"))
+        if (requestUrl.StartsWith("https://mightygymcdn.nyc3.cdn.digitaloceanspaces.com"))
         {
             Log.Information("URL Is Mighty Gym: Bypassing.");
             willCache = false;
