@@ -59,7 +59,7 @@ public static class BulkPreCache
         {
             var file = files[index];
             if (string.IsNullOrEmpty(file.FileName))
-                return;
+                continue;
 
             try
             {
@@ -102,9 +102,12 @@ public static class BulkPreCache
         var fileStream = new FileStream(fileInfo.FilePath, FileMode.Create, FileAccess.Write);
         await response.Content.CopyToAsync(fileStream);
         fileStream.Close();
-        await Task.Delay(10);
-        File.SetLastWriteTimeUtc(fileInfo.FilePath, fileInfo.LastModifiedDate);
-        File.SetCreationTimeUtc(fileInfo.FilePath, fileInfo.LastModifiedDate);
-        File.SetLastAccessTimeUtc(fileInfo.FilePath, fileInfo.LastModifiedDate);
+        if (fileInfo.LastModified > 0)
+        {
+            await Task.Delay(10);
+            File.SetLastWriteTimeUtc(fileInfo.FilePath, fileInfo.LastModifiedDate);
+            File.SetCreationTimeUtc(fileInfo.FilePath, fileInfo.LastModifiedDate);
+            File.SetLastAccessTimeUtc(fileInfo.FilePath, fileInfo.LastModifiedDate);
+        }
     }
 }
