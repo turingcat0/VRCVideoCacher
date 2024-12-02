@@ -17,9 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="yt-dlp-stub.exe">
+      <None Remove="yt-dlp-stub.exe" />
+      <EmbeddedResource Include="yt-dlp-stub.exe">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

@@ -34,7 +34,7 @@ public static class ConfigManager
 public class ConfigModel
 {
     public string ytdlWebServerURL = "http://localhost:9696/";
-    public string ytdlPath = "Utils/yt-dlp-stub.exe";
+    public string ytdlPath = "Utils/yt-dlp.exe";
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
     public bool CacheYouTube = true;

@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Reflection;
+using System.Security.Cryptography;
 using Serilog;
 using Serilog.Core;
 using Serilog.Templates;
@@ -44,15 +45,28 @@ internal static class Program
         await Task.Delay(-1);
     }
 
+    public static Stream GetYtDlpStub()
+    {
+        return GetEmbeddedResource("VRCVideoCacher.yt-dlp-stub.exe");
+    }
+    
+    private static Stream GetEmbeddedResource(string resourceName)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null)
+            throw new Exception($"{resourceName} not found in resources.");
+
+        return stream;
+    }
+
     public static string GetOurYTDLPHash()
     {
-        var ytdlStubPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "yt-dlp-stub.exe");
-        if (!File.Exists(ytdlStubPath))
-        {
-            Logger.Error("yt-dlp-stub.exe not found.");
-            return string.Empty;
-        }
-        return ComputeBinaryContentHash(File.ReadAllBytes(ytdlStubPath));
+        var stream = GetYtDlpStub();
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        stream.Dispose();
+        return ComputeBinaryContentHash(ms.ToArray());
     }
     
     public static string ComputeBinaryContentHash(byte[] base64)
