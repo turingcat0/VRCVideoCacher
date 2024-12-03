@@ -12,7 +12,7 @@ namespace VRCVideoCacher;
 internal static class Program
 {
     public static string ytdlpHash = string.Empty;
-    public const string Version = "2024.11.27";
+    public const string Version = "2024.11.28";
     public static readonly ILogger Logger = Log.ForContext("SourceContext", "Core");
     public static async Task Main(string[] args)
     {
@@ -24,6 +24,8 @@ internal static class Program
                 theme: TemplateTheme.Literate))
             .CreateLogger();
 
+        await Updater.CheckForUpdates();
+        Updater.Cleanup();
         if (Environment.CommandLine.Contains("--Reset"))
         {
             FileTools.Restore();
@@ -36,6 +38,7 @@ internal static class Program
         }
         Console.CancelKeyPress += (_, _) => ConsoleOnCancelKeyPress();
         AppDomain.CurrentDomain.ProcessExit += (_, _) => OnAppQuit();
+        
         
         ytdlpHash = GetOurYTDLPHash();
         FileTools.BackupAndReplaceYTDL();
