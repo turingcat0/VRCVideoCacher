@@ -116,21 +116,22 @@ public static class ytdlManager
         };
         
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
+        var additionalArgs = ConfigManager.config.ytdlAdditionalArgs;
         var isYouTube = IsYouTubeUrl(url);
         // TODO: safety check for escaping strings
         if (avPro)
         {
             if (isYouTube)
                 p.StartInfo.Arguments =
-                    $"-4 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings --get-url {url}";
+                    $"-4 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
             else
                 p.StartInfo.Arguments =
-                    $"-4 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --no-playlist --no-warnings --get-url {url}";
+                    $"-4 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         else
         {
             p.StartInfo.Arguments =
-                $"-4 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings --get-url {url}";
+                $"-4 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         
         p.Start();
@@ -307,13 +308,14 @@ public static class ytdlManager
             File.Delete(_tempDownloadPath);
         }
         Log.Information("Downloading YouTube Video: {URL}", url);
+        var additionalArgs = ConfigManager.config.ytdlAdditionalArgs;
         var p = new Process
         {
             StartInfo =
             {
                 FileName = ConfigManager.config.ytdlPath,
                 Arguments =
-                    $"-q -o {_tempDownloadPath} -f bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http] --no-playlist --remux-video mp4 --no-progress -- {videoId}"
+                    $"-q -o {_tempDownloadPath} -f bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http] --no-playlist --remux-video mp4 --no-progress {additionalArgs} -- {videoId}"
                     // $@"-f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings {url} " %(id)s.%(ext)s
             }
         };
