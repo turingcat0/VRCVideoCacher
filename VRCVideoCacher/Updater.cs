@@ -13,6 +13,8 @@ namespace VRCVideoCacher
             DefaultRequestHeaders = { { "User-Agent", "VRCVideoCacher.Updater" } }
         };
         private static readonly ILogger Log = Program.Logger.ForContext("SourceContext", "Updater");
+        private static string path = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "VRCVideoCacher.exe");
+        private static string bkppath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "VRCVideoCacher.exe.bkp");
         
         public static async Task CheckForUpdates()
         {
@@ -49,8 +51,8 @@ namespace VRCVideoCacher
         
         public static void Cleanup()
         {
-            if(File.Exists("VRCVideoCacher.exe.bkp"))
-                File.Delete("VRCVideoCacher.exe.bkp");
+            if(File.Exists(bkppath))
+                File.Delete(bkppath);
         }
         
         private static async Task UpdateAsync(YtApi release)
@@ -61,8 +63,9 @@ namespace VRCVideoCacher
                     continue;
                 
                 var stream = await _httpClient.GetStreamAsync(asset.browser_download_url);
-                File.Move("VRCVideoCacher.exe", "VRCVideoCacher.exe.bkp");
-                await using var fileStream = new FileStream("VRCVideoCacher.exe", FileMode.Create, FileAccess.Write, FileShare.None);
+                
+                File.Move(path, bkppath);
+                await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
                 await stream.CopyToAsync(fileStream);
                 fileStream.Close();
                 
@@ -73,9 +76,9 @@ namespace VRCVideoCacher
                     {
                         StartInfo = new ProcessStartInfo
                         {
-                            FileName = "VRCVideoCacher.exe",
+                            FileName = path,
                             UseShellExecute = true,
-                            WorkingDirectory = Environment.CurrentDirectory
+                            WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath)!
                         }
                     };
                     p.Start();
