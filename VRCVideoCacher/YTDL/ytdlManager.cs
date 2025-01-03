@@ -123,15 +123,15 @@ public static class ytdlManager
         {
             if (isYouTube)
                 p.StartInfo.Arguments =
-                    $"-4 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
             else
                 p.StartInfo.Arguments =
-                    $"-4 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         else
         {
             p.StartInfo.Arguments =
-                $"-4 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                $"-f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         
         p.Start();
