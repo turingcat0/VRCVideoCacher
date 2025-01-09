@@ -367,7 +367,7 @@ public static class ytdlManager
             StartInfo =
             {
                 FileName = ConfigManager.config.ytdlPath,
-                Arguments = $"-j {url}",
+                Arguments = $"--no-playlist --no-warnings -j {url}",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
