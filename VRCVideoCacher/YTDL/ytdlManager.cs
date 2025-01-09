@@ -376,15 +376,23 @@ public static class ytdlManager
         };
         p.Start();
         var rawData = p.StandardOutput.ReadToEnd();
-        var data = JsonConvert.DeserializeObject<dynamic>(rawData);
-        if (data is null ||
-            data.id is null ||
-            data.is_live is true ||
-            data.was_live is true ||
-            data.duration is null ||
-            data.duration > 3600)
+        try
+        {
+            var data = JsonConvert.DeserializeObject<dynamic>(rawData);
+            if (data is null ||
+                data.id is null ||
+                data.is_live is true ||
+                data.was_live is true ||
+                data.duration is null ||
+                data.duration > 3600)
+                return null;
+            
+            return data.id;
+        }
+        catch (Exception)
+        {
+            Log.Error("Failed to get video ID from YouTube URL: {URL} {rawData}", url, rawData);
             return null;
-
-        return data.id;
+        }
     }
 }
