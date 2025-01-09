@@ -12,7 +12,7 @@ namespace VRCVideoCacher;
 internal static class Program
 {
     public static string ytdlpHash = string.Empty;
-    public const string Version = "2024.12.9";
+    public const string Version = "2025.1.8";
     public static readonly ILogger Logger = Log.ForContext("SourceContext", "Core");
     public static async Task Main(string[] args)
     {
