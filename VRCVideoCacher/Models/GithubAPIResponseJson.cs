@@ -1,9 +1,8 @@
-﻿namespace VRCVideoCacher.YTDL;
-
-public class GithubAPIResponseJson
-{
-    
-}
+﻿// ReSharper disable InconsistentNaming
+// ReSharper disable UnusedMember.Global
+// ReSharper disable ClassNeverInstantiated.Global
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+namespace VRCVideoCacher.Models;
 
 public class Asset {
     public string url { get; set; }

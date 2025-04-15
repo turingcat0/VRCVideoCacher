@@ -3,42 +3,36 @@ using Serilog;
 
 namespace VRCVideoCacher;
 
-public static class BulkPreCache
+public class BulkPreCache
 {
-    private static readonly ILogger Log = Program.Logger.ForContext("SourceContext", "BulkPreCache");
-
-    private static readonly HttpClient _httpClient = new()
+    private static readonly ILogger Log = Program.Logger.ForContext<BulkPreCache>();
+    private static readonly HttpClient HttpClient = new()
     {
-        DefaultRequestHeaders =
-        {
-            {
-                "User-Agent",
-                "VRCVideoCacher"
-            }
-        }
+        DefaultRequestHeaders = { { "User-Agent", "VRCVideoCacher" } }
     };
 
     // FileName and Url are required
     // LastModified and Size are optional
     // e.g. JSON response
     // [{"fileName":"--QOnlGckhs.mp4","url":"https:\/\/example.com\/--QOnlGckhs.mp4","lastModified":1631653260,"size":124029113},...]
-    public class DownloadInfo
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private class DownloadInfo(string fileName, string url, double lastModified, long size)
     {
-        public string FileName { get; set; }
-        public string Url { get; set; }
-        public double LastModified { get; set; }
-        public long Size { get; set; }
-        
+        public string FileName { get; set; } = fileName;
+        public string Url { get; set; } = url;
+        public double LastModified { get; set; } = lastModified;
+        public long Size { get; set; } = size;
+
         public DateTime LastModifiedDate => new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
             .AddSeconds(LastModified);
-        public string FilePath => Path.Combine(ConfigManager.config.CachedAssetPath, FileName);
+        public string FilePath => Path.Combine(ConfigManager.Config.CachedAssetPath, FileName);
     }
     
     public static async Task DownloadFileList()
     {
-        foreach (var url in ConfigManager.config.PreCacheUrls)
+        foreach (var url in ConfigManager.Config.PreCacheUrls)
         {
-            using var response = await _httpClient.GetAsync(url);
+            using var response = await HttpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
                 Log.Information("Failed to download {Url}: {ResponseStatusCode}", url, response.StatusCode);
@@ -47,6 +41,11 @@ public static class BulkPreCache
 
             var content = await response.Content.ReadAsStringAsync();
             var files = JsonConvert.DeserializeObject<List<DownloadInfo>>(content);
+            if (files == null || files.Count == 0)
+            {
+                Log.Information("No files to download for {URL}", url);
+                return;
+            }
             await DownloadVideos(files);
             Log.Information("All {count} files for {URL} are up to date.", files.Count, url);
         }
@@ -93,7 +92,7 @@ public static class BulkPreCache
     
     private static async Task DownloadFile(DownloadInfo fileInfo)
     {
-        using var response = await _httpClient.GetAsync(fileInfo.Url);
+        using var response = await HttpClient.GetAsync(fileInfo.Url);
         if (!response.IsSuccessStatusCode)
         {
             Log.Information("Failed to download {Url}: {ResponseStatusCode}", fileInfo.Url, response.StatusCode);

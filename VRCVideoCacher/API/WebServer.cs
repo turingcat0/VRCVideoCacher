@@ -1,45 +1,43 @@
 ﻿using EmbedIO;
-using EmbedIO.Actions;
 using EmbedIO.Files;
 using EmbedIO.WebApi;
-using Serilog;
 using Swan.Logging;
 using ILogger = Serilog.ILogger;
 
 namespace VRCVideoCacher.API;
 
-public static class WebServer
+public class WebServer
 {
-    private static EmbedIO.WebServer server;
-    public static readonly ILogger Log = Program.Logger.ForContext("SourceContext", "WebServer");
+    private static EmbedIO.WebServer? _server;
+    public static readonly ILogger Log = Program.Logger.ForContext<WebServer>();
     
     public static void Init()
     {
-        if (!ConfigManager.config.ytdlWebServerURL.Contains("localhost") &&
-            !ConfigManager.config.ytdlWebServerURL.Contains("127.0.0.1"))
+        if (!ConfigManager.Config.ytdlWebServerURL.Contains("localhost") &&
+            !ConfigManager.Config.ytdlWebServerURL.Contains("127.0.0.1"))
         {
             Log.Warning("WebServer in config isn't localhost, not starting local WebServer.");
             return;
         }
-        server = CreateWebServer(ConfigManager.config.ytdlWebServerURL);
-        server.RunAsync();  
+        _server = CreateWebServer(ConfigManager.Config.ytdlWebServerURL);
+        _server.RunAsync();  
     }
     
     private static EmbedIO.WebServer CreateWebServer(string url)
     {
-        Swan.Logging.Logger.UnregisterLogger<ConsoleLogger>();
-        Swan.Logging.Logger.RegisterLogger<WebServerLogger>();
+        Logger.UnregisterLogger<ConsoleLogger>();
+        Logger.RegisterLogger<WebServerLogger>();
         var server = new EmbedIO.WebServer(o => o
                 .WithUrlPrefix(url)
                 .WithMode(HttpListenerMode.EmbedIO))
             // First, we will configure our web server by adding Modules.
             .WithWebApi("/api", m => m
-                .WithController<APIController>())
-            .WithStaticFolder("/", ConfigManager.config.CachedAssetPath, true, m => m
+                .WithController<ApiController>())
+            .WithStaticFolder("/", ConfigManager.Config.CachedAssetPath, true, m => m
                 .WithContentCaching(true));
 
         // Listen for state changes.
-        server.StateChanged += (s, e) => $"WebServer New State - {e.NewState}".Info();
+        server.StateChanged += (_, e) => $"WebServer State: {e.NewState}".Info();
         server.OnUnhandledException += OnUnhandledException;
         server.OnHttpException += OnHttpException;  
         return server;
@@ -47,13 +45,13 @@ public static class WebServer
 
     private static Task OnHttpException(IHttpContext context, IHttpException httpexception)
     {
-        Log.Information("[WEBSERVER]: " + httpexception.Message);
+        Log.Information(httpexception.Message!);
         return Task.CompletedTask;
     }
 
     private static Task OnUnhandledException(IHttpContext context, Exception exception)
     {
-        Log.Information("[WEBSERVER]: " + exception.Message);
+        Log.Information(exception.Message);
         return Task.CompletedTask;
     }
 }

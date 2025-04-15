@@ -1,36 +1,40 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Serilog;
+// ReSharper disable FieldCanBeMadeReadOnly.Global
 
 namespace VRCVideoCacher;
 
-public static class ConfigManager
+public class ConfigManager
 {
-    public static ConfigModel config;
-    private static ILogger Log = Program.Logger.ForContext("SourceContext", "ConfigManager");
+    public static readonly ConfigModel Config;
+    private static readonly ILogger Log = Program.Logger.ForContext<ConfigManager>();
+    private static readonly string ConfigFileName = "Config.json";
     
     static ConfigManager()
     {
         Log.Information("Loading config...");
-        if (!File.Exists("Config.json"))
+        if (!File.Exists(ConfigFileName))
         {
-            config = new ConfigModel();
+            Config = new ConfigModel();
             SaveConfig();
         }
         else
         {
-            config = JsonConvert.DeserializeObject<ConfigModel>(File.ReadAllText("Config.json"));
+            var configFilePath = Path.Combine(Program.CurrentProcessPath, ConfigFileName);
+            Config = JsonConvert.DeserializeObject<ConfigModel>(File.ReadAllText(configFilePath)) ?? new ConfigModel();
             SaveConfig();
         }
         Log.Information("Loaded config.");
     }
 
-    private static void SaveConfig()
+    public static void SaveConfig()
     {
         Log.Information("Saving config...");
-        File.WriteAllText("Config.json", JsonConvert.SerializeObject(config, Formatting.Indented));
+        File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(Config, Formatting.Indented));
     }
 }
 
+// ReSharper disable InconsistentNaming
 public class ConfigModel
 {
     public string ytdlWebServerURL = "http://localhost:9696/";
@@ -43,6 +47,6 @@ public class ConfigModel
     public bool CacheVRDancing = true;
 
     public bool AutoUpdate = true;
-    // public bool CacheOther = false;
     public string[] PreCacheUrls = [];
 }
+// ReSharper restore InconsistentNaming
