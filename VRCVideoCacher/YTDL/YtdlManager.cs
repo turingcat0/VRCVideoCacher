@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.IO.Compression;
+using Newtonsoft.Json;
 using Serilog;
 using VRCVideoCacher.Models;
 
@@ -12,18 +13,19 @@ public class YtdlManager
         DefaultRequestHeaders = { { "User-Agent", "VRCVideoCacher" } }
     };
     private static readonly string YtdlVersionPath;
-    private const string ApiUpdater = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest";
+    private const string YtdlpApiUrl = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest";
+    private const string FfmpegUrl = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
     
     static YtdlManager()
     {
         YtdlVersionPath = Path.Combine(Program.CurrentProcessPath, "yt-dlp.version.txt");
     }
 
-    public static async Task Init()
+    public static async Task TryDownloadYtdlp()
     {
         Log.Information("Checking for YT-DLP updates...");
-        var res = await HttpClient.GetAsync(ApiUpdater);
-        var data = await res.Content.ReadAsStringAsync();
+        var response = await HttpClient.GetAsync(YtdlpApiUrl);
+        var data = await response.Content.ReadAsStringAsync();
         var json = JsonConvert.DeserializeObject<YtApi>(data);
         if (json == null)
         {
@@ -53,6 +55,45 @@ public class YtdlManager
         {
             Log.Information("YT-DLP is up to date.");
         }
+    }
+    
+    public static async Task TryDownloadFfmpeg()
+    {
+        if (!ConfigManager.Config.CacheYouTube ||
+            File.Exists(Path.Combine(Program.CurrentProcessPath, "Utils", "ffmpeg.exe")))
+            return;
+        
+        Log.Information("Downloading FFmpeg...");
+        using var response = await HttpClient.GetAsync(FfmpegUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            Log.Information("Failed to download {Url}: {ResponseStatusCode}", FfmpegUrl, response.StatusCode);
+            return;
+        }
+        
+        var filePath = Path.Combine(Program.CurrentProcessPath, Path.GetFileName(FfmpegUrl));
+        var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+        await response.Content.CopyToAsync(fileStream);
+        fileStream.Close();
+        
+        Log.Information("Extracting FFmpeg zip.");
+        ZipFile.ExtractToDirectory(filePath, Program.CurrentProcessPath);
+        Log.Information("FFmpeg extracted.");
+
+        var ffmpegPath = Path.Combine(Program.CurrentProcessPath, "ffmpeg-master-latest-win64-gpl");
+        var ffmpegBinPath = Path.Combine(ffmpegPath, "bin");
+        var ffmpegFiles = Directory.GetFiles(ffmpegBinPath);
+        foreach (var ffmpegFile in ffmpegFiles)
+        {
+            var fileName = Path.GetFileName(ffmpegFile);
+            var destPath = Path.Combine(Program.CurrentProcessPath, "Utils", fileName);
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+            File.Move(ffmpegFile, destPath);
+        }
+        Directory.Delete(ffmpegPath, true);
+        File.Delete(filePath);
+        Log.Information("FFmpeg downloaded and extracted.");
     }
     
     private static async Task DownloadYtdl(YtApi json)

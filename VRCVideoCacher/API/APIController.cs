@@ -10,6 +10,23 @@ public class ApiController : WebApiController
 {
     private static readonly Serilog.ILogger Log = Program.Logger.ForContext<ApiController>();
     
+    [Route(HttpVerbs.Get, "/genpotoken")]
+    public async Task GenPoToken()
+    {
+        await PoTokenGenerator.GeneratePoToken();
+        var poToken = await PoTokenGenerator.GetPoToken();
+        await HttpContext.SendStringAsync(poToken, "text/plain", Encoding.UTF8);
+        Log.Information("Gave YT-DLP out PoToken: {PoToken}", poToken);
+    }
+
+    [Route(HttpVerbs.Get, "/getpotoken")]
+    public async Task GetPoToken()
+    {
+        var poToken = await PoTokenGenerator.GetPoToken();
+        await HttpContext.SendStringAsync(poToken, "text/plain", Encoding.UTF8);
+        Log.Information("Gave YT-DLP out PoToken: {PoToken}", poToken);
+    }
+    
     [Route(HttpVerbs.Get, "/getvideo")]
     public async Task GetVideo()
     {
@@ -17,10 +34,11 @@ public class ApiController : WebApiController
         var avPro = Request.QueryString["avpro"] == "True";
         if (string.IsNullOrEmpty(requestUrl))
         {
-            Log.Information("No URL provided.");
+            Log.Error("No URL provided.");
             await HttpContext.SendStringAsync("No URL provided.", "text/plain", Encoding.UTF8);
             return;
         }
+        Log.Information("Request URL: {URL}", requestUrl);
         var videoInfo = await VideoId.GetVideoId(requestUrl);
         if (videoInfo == null)
         {
@@ -61,7 +79,7 @@ public class ApiController : WebApiController
             willCache = false;
         }
         
-        var responseUrl = VideoId.GetUrl(requestUrl, avPro);
+        var responseUrl = await VideoId.GetUrl(requestUrl, avPro);
         Log.Information("Responding with URL: {URL}", responseUrl);
         await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);
         if (willCache)

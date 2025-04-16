@@ -159,8 +159,8 @@ public class VideoId
             return null;
         }
     }
-    
-    public static string GetUrl(string url, bool avPro)
+
+    public static async Task<string> GetUrl(string url, bool avPro, bool isRetry = false)
     {
         // if url contains "results?" then it's a search
         if (url.Contains("results?"))
@@ -168,7 +168,7 @@ public class VideoId
             Log.Error("URL is a search query, cannot get video URL.");
             return string.Empty;
         }
-        
+
         var p = new Process
         {
             StartInfo =
@@ -180,35 +180,51 @@ public class VideoId
                 CreateNoWindow = true
             }
         };
-        
+
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
+        var poToken = string.Empty;
+        if (ConfigManager.Config.ytdlGeneratePoToken)
+            poToken = await PoTokenGenerator.GetPoToken();
+        if (!string.IsNullOrEmpty(poToken))
+            poToken = $"po_token=web.player+{poToken}";
+        
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
-        var isYouTube = VideoId.IsYouTubeUrl(url);
+        var isYouTube = IsYouTubeUrl(url);
         // TODO: safety check for escaping strings
         if (avPro)
         {
             if (isYouTube)
                 p.StartInfo.Arguments =
-                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web;{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
             else
                 p.StartInfo.Arguments =
-                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         else
         {
             p.StartInfo.Arguments =
-                $"-f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                $"-f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         
         p.Start();
-        var output = p.StandardOutput.ReadToEnd();
+        var output = await p.StandardOutput.ReadToEndAsync();
         if (output.StartsWith("WARNING: ") ||
             output.StartsWith("ERROR: "))
         {
             Log.Error("YouTube Get URL: {output}", output);
+            if (ConfigManager.Config.ytdlGeneratePoToken &&
+                output.Contains("Sign in to confirm you’re not a bot") &&
+                !isRetry)
+            {
+                await PoTokenGenerator.GeneratePoToken();
+                Log.Information("Retrying with new POToken...");
+                return await GetUrl(url, avPro, true);
+            }
+
             return string.Empty;
         }
-        var error = p.StandardError.ReadToEnd();
+
+        var error = await p.StandardError.ReadToEndAsync();
         if (!string.IsNullOrEmpty(error))
         {
             Log.Error("YouTube Get URL: {output}", error);

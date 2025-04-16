@@ -36,7 +36,7 @@ public class VideoDownloader
             {
                 case UrlType.YouTube:
                     if (ConfigManager.Config.CacheYouTube)
-                        DownloadYouTubeVideo(queueItem.VideoUrl);
+                        DownloadYouTubeVideo(queueItem.VideoUrl).Wait();
                     break;
                 case UrlType.PyPyDance:
                     if (ConfigManager.Config.CachePyPyDance)
@@ -66,7 +66,7 @@ public class VideoDownloader
         DownloadQueue.Enqueue(videoInfo);
     }
     
-    private static void DownloadYouTubeVideo(string url)
+    private static async Task DownloadYouTubeVideo(string url, bool isRetry = false)
     {
         var videoId = VideoId.TryGetYouTubeVideoId(url);
         if (string.IsNullOrEmpty(videoId))
@@ -81,19 +81,51 @@ public class VideoDownloader
             File.Delete(TempDownloadPath);
         }
         Log.Information("Downloading YouTube Video: {URL}", url);
+        
+        var poToken = string.Empty;
+        if (ConfigManager.Config.ytdlGeneratePoToken)
+            poToken = await PoTokenGenerator.GetPoToken();
+        if (!string.IsNullOrEmpty(poToken))
+            poToken = $"po_token=web.player+{poToken}";
+        
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var p = new Process
         {
             StartInfo =
             {
                 FileName = ConfigManager.Config.ytdlPath,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
                 Arguments =
-                    $"-q -o {TempDownloadPath} -f bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http] --no-playlist --remux-video mp4 --no-progress {additionalArgs} -- {videoId}"
+                    $"-q -o {TempDownloadPath} -f bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http] --extractor-args=\"youtube:{poToken}\" --no-playlist --remux-video mp4 --no-progress {additionalArgs} -- {videoId}"
                     // $@"-f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings {url} " %(id)s.%(ext)s
             }
         };
         p.Start();
-        p.WaitForExit();
+        await p.WaitForExitAsync();
+        var output = await p.StandardOutput.ReadToEndAsync();
+        if (output.StartsWith("WARNING: ") ||
+            output.StartsWith("ERROR: "))
+        {
+            Log.Error("YouTube failed to download: {output}", output);
+            if (ConfigManager.Config.ytdlGeneratePoToken &&
+                output.Contains("Sign in to confirm you’re not a bot") &&
+                !isRetry)
+            {
+                await PoTokenGenerator.GeneratePoToken();
+                Log.Information("Retrying with new POToken...");
+                await DownloadYouTubeVideo(url, true);
+                return;
+            }
+        }
+        var error = await p.StandardError.ReadToEndAsync();
+        if (!string.IsNullOrEmpty(error))
+        {
+            Log.Error("Failed to download YouTube Video: {URL} {output}", url, error);
+            return;
+        }
         Thread.Sleep(10);
         if (!File.Exists(TempDownloadPath))
         {

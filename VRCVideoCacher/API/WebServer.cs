@@ -43,9 +43,9 @@ public class WebServer
         return server;
     }
 
-    private static Task OnHttpException(IHttpContext context, IHttpException httpexception)
+    private static Task OnHttpException(IHttpContext context, IHttpException httpException)
     {
-        Log.Information(httpexception.Message!);
+        Log.Information(httpException.Message!);
         return Task.CompletedTask;
     }
 

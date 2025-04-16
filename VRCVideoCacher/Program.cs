@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Security.Cryptography;
 using Serilog;
 using Serilog.Templates;
@@ -41,10 +41,24 @@ internal static class Program
         AppDomain.CurrentDomain.ProcessExit += (_, _) => OnAppQuit();
         
         YtdlpHash = GetOurYtdlpHash();
-        FileTools.BackupAndReplaceYtdl();
-        await YtdlManager.Init();
+        await YtdlManager.TryDownloadYtdlp();
         WebServer.Init();
+        FileTools.BackupAndReplaceYtdl();
         await BulkPreCache.DownloadFileList();
+        _ = YtdlManager.TryDownloadFfmpeg();
+
+        if (ConfigManager.Config.ytdlGeneratePoToken)
+        {
+            try
+            {
+                await PoTokenGenerator.TryGeneratePoToken();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to generate PoToken: {Error}", ex.Message);
+            }
+        }
+        
         await Task.Delay(-1);
     }
 

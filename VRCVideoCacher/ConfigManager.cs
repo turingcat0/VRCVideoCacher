@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Serilog;
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 
@@ -39,6 +39,7 @@ public class ConfigModel
 {
     public string ytdlWebServerURL = "http://localhost:9696/";
     public string ytdlPath = "Utils/yt-dlp.exe";
+    public bool ytdlGeneratePoToken = true;
     public string ytdlAdditionalArgs = string.Empty;
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
