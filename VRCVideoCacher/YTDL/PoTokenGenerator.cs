@@ -213,7 +213,7 @@ public class PoTokenGenerator
         {
             FileName = pythonExe,
             WorkingDirectory = WorkingDirectory,
-            Arguments = $"{scriptPath} {args}",
+            Arguments = $"\"{scriptPath}\" {args}",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
