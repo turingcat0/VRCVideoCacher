@@ -37,6 +37,8 @@ internal static class Program
         if (string.IsNullOrEmpty(url))
         {
             WriteLog("[Error] No URL found in arguments");
+            await Console.Error.WriteLineAsync("[VRCVideoCacher] No URL found in arguments");
+            Environment.ExitCode = 1;
             return;
         }
         
@@ -48,13 +50,12 @@ internal static class Program
             WriteLog("Response: " + output);
             Console.WriteLine(output);
             if (!output.Trim().StartsWith("http"))
-            {
-                Environment.ExitCode = 1;
-            }
+                throw new Exception($"Invalid response from server: {output}");
         }
         catch (Exception ex)
         {
             WriteLog($"[Error] {ex.Message}");
+            await Console.Error.WriteLineAsync($"[VRCVideoCacher] {ex.Message}");
             Environment.ExitCode = 1;
         }
     }
