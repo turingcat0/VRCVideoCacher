@@ -21,6 +21,11 @@ public class Updater
     public static async Task CheckForUpdates()
     {
         Log.Information("Checking for updates...");
+        if(Program.Version.Contains("-dev"))
+        {
+            Log.Information("Running in dev mode. Skipping update check.");
+            return;
+        }
         var response = await HttpClient.GetAsync(UpdateUrl);
         if (!response.IsSuccessStatusCode)
         {
