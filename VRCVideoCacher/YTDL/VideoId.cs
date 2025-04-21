@@ -124,9 +124,9 @@ public class VideoId
         };
     }
 
-    public static string? TryGetYouTubeVideoId(string url)
+    public static async Task<string> TryGetYouTubeVideoId(string url)
     {
-        var p = new Process
+        var process = new Process
         {
             StartInfo =
             {
@@ -138,26 +138,23 @@ public class VideoId
                 CreateNoWindow = true
             }
         };
-        p.Start();
-        var rawData = p.StandardOutput.ReadToEnd();
-        try
-        {
-            var data = JsonConvert.DeserializeObject<dynamic>(rawData);
-            if (data is null ||
-                data.id is null ||
-                data.is_live is true ||
-                data.was_live is true ||
-                data.duration is null ||
-                data.duration > 3600)
-                return null;
-            
-            return data?.id;
-        }
-        catch (Exception)
-        {
-            Log.Error("Failed to get video ID from YouTube URL: {URL} {rawData}", url, rawData);
-            return null;
-        }
+        process.Start();
+        var rawData = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        if (process.ExitCode != 0)
+            throw new Exception($"Failed to get video ID: {error.Trim()}");
+        if (string.IsNullOrEmpty(rawData))
+            throw new Exception("Failed to get video ID");
+        var data = JsonConvert.DeserializeObject<dynamic>(rawData);
+        if (data is null || data.id is null)
+            throw new Exception("Failed to get video ID");
+        if (data.is_live is true || data.was_live is true)
+            throw new Exception("Failed to get video ID: Video is a stream");
+        if (data.duration is null || data.duration > 3600)
+            throw new Exception("Failed to get video ID: Video is too long ");
+        
+        return data.id;
     }
 
     public static async Task<string> GetUrl(string url, bool avPro, bool isRetry = false)
@@ -169,7 +166,7 @@ public class VideoId
             return string.Empty;
         }
 
-        var p = new Process
+        var process = new Process
         {
             StartInfo =
             {
@@ -194,20 +191,25 @@ public class VideoId
         if (avPro)
         {
             if (isYouTube)
-                p.StartInfo.Arguments =
+                process.StartInfo.Arguments =
                     $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web;{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
             else
-                p.StartInfo.Arguments =
+                process.StartInfo.Arguments =
                     $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         else
         {
-            p.StartInfo.Arguments =
+            process.StartInfo.Arguments =
                 $"-f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
         }
         
-        p.Start();
-        var output = await p.StandardOutput.ReadToEndAsync();
+        process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        output = output.Trim();
+        var error = await process.StandardError.ReadToEndAsync();
+        error = error.Trim();
+        await process.WaitForExitAsync();
+        
         if (output.StartsWith("WARNING: ") ||
             output.StartsWith("ERROR: "))
         {
@@ -223,14 +225,13 @@ public class VideoId
 
             return string.Empty;
         }
-
-        var error = await p.StandardError.ReadToEndAsync();
-        if (!string.IsNullOrEmpty(error))
+        
+        if (process.ExitCode != 0)
         {
-            Log.Error("YouTube Get URL: {output}", error);
+            Log.Error("YouTube Get URL: {error}", error);
             return string.Empty;
         }
 
-        return output.Trim();
+        return output;
     }
 }

@@ -68,10 +68,14 @@ public class VideoDownloader
     
     private static async Task DownloadYouTubeVideo(string url, bool isRetry = false)
     {
-        var videoId = VideoId.TryGetYouTubeVideoId(url);
-        if (string.IsNullOrEmpty(videoId))
+        string? videoId;
+        try
         {
-            Log.Information("Not downloading video it's either a stream, invalid or over an hour in length: {URL}", url);
+            videoId = await VideoId.TryGetYouTubeVideoId(url);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Not downloading YouTube video: {URL} {ex}", url, ex.Message);
             return;
         }
 

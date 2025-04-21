@@ -14,9 +14,7 @@ public class ApiController : WebApiController
     public async Task GenPoToken()
     {
         await PoTokenGenerator.GeneratePoToken();
-        var poToken = await PoTokenGenerator.GetPoToken();
-        await HttpContext.SendStringAsync(poToken, "text/plain", Encoding.UTF8);
-        Log.Information("Gave YT-DLP out PoToken: {PoToken}", poToken);
+        await GetPoToken();
     }
 
     [Route(HttpVerbs.Get, "/getpotoken")]
@@ -24,7 +22,7 @@ public class ApiController : WebApiController
     {
         var poToken = await PoTokenGenerator.GetPoToken();
         await HttpContext.SendStringAsync(poToken, "text/plain", Encoding.UTF8);
-        Log.Information("Gave YT-DLP out PoToken: {PoToken}", poToken);
+        Log.Information("Gave YT-DLP our PoToken: {PoToken}", poToken);
     }
     
     [Route(HttpVerbs.Get, "/getvideo")]

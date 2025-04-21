@@ -16,7 +16,7 @@ public class ConfigManager
         if (!File.Exists(ConfigFileName))
         {
             Config = new ConfigModel();
-            SaveConfig();
+            SaveConfig(true);
         }
         else
         {
@@ -27,9 +27,10 @@ public class ConfigManager
         Log.Information("Loaded config.");
     }
 
-    public static void SaveConfig()
+    public static void SaveConfig(bool silent = false)
     {
-        Log.Information("Saving config...");
+        if (!silent)
+            Log.Information("Saving config...");
         File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(Config, Formatting.Indented));
     }
 }
