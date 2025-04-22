@@ -3,7 +3,7 @@
 internal static class Program
 {
     private static string _logFilePath = string.Empty;
-    private const string _baseUrl = "http://localhost:9696";
+    private const string BaseUrl = "http://localhost:9696";
 
     private static void WriteLog(string message)
     {
@@ -37,6 +37,8 @@ internal static class Program
         if (string.IsNullOrEmpty(url))
         {
             WriteLog("[Error] No URL found in arguments");
+            await Console.Error.WriteLineAsync("[VRCVideoCacher] No URL found in arguments");
+            Environment.ExitCode = 1;
             return;
         }
         
@@ -44,17 +46,16 @@ internal static class Program
         {
             using var httpClient = new HttpClient();
             var inputUrl = Uri.EscapeDataString(url);
-            var output = await httpClient.GetStringAsync($"{_baseUrl}/api/getvideo?url={inputUrl}&avpro={avPro}");
+            var output = await httpClient.GetStringAsync($"{BaseUrl}/api/getvideo?url={inputUrl}&avpro={avPro}");
             WriteLog("Response: " + output);
             Console.WriteLine(output);
             if (!output.Trim().StartsWith("http"))
-            {
-                Environment.ExitCode = 1;
-            }
+                throw new Exception($"Invalid response from server: {output}");
         }
         catch (Exception ex)
         {
             WriteLog($"[Error] {ex.Message}");
+            await Console.Error.WriteLineAsync($"[VRCVideoCacher] {ex.Message}");
             Environment.ExitCode = 1;
         }
     }

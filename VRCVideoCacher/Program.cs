@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Security.Cryptography;
 using Serilog;
-using Serilog.Core;
 using Serilog.Templates;
 using Serilog.Templates.Themes;
 using VRCVideoCacher.API;
@@ -11,9 +10,11 @@ namespace VRCVideoCacher;
 
 internal static class Program
 {
-    public static string ytdlpHash = string.Empty;
-    public const string Version = "2025.1.8";
+    public static string YtdlpHash = string.Empty;
+    public const string Version = "2025.4.21";
+    public static readonly string CurrentProcessPath = Path.GetDirectoryName(Environment.ProcessPath) ?? string.Empty;
     public static readonly ILogger Logger = Log.ForContext("SourceContext", "Core");
+    
     public static async Task Main(string[] args)
     {
         Console.Title = $"VRCVideoCacher v{Version}";
@@ -33,18 +34,32 @@ internal static class Program
         }
         if (Environment.CommandLine.Contains("--Hash"))
         {
-            Console.WriteLine(GetOurYTDLPHash());
+            Console.WriteLine(GetOurYtdlpHash());
             Environment.Exit(0);
         }
         Console.CancelKeyPress += (_, _) => ConsoleOnCancelKeyPress();
         AppDomain.CurrentDomain.ProcessExit += (_, _) => OnAppQuit();
         
-        
-        ytdlpHash = GetOurYTDLPHash();
-        FileTools.BackupAndReplaceYTDL();
-        await ytdlManager.Init();
+        YtdlpHash = GetOurYtdlpHash();
+        await YtdlManager.TryDownloadYtdlp();
+        AutoStartShortcut.TryUpdateShortcutPath();
         WebServer.Init();
+        FileTools.BackupAndReplaceYtdl();
         await BulkPreCache.DownloadFileList();
+        _ = YtdlManager.TryDownloadFfmpeg();
+
+        if (ConfigManager.Config.ytdlGeneratePoToken)
+        {
+            try
+            {
+                await PoTokenGenerator.TryGeneratePoToken();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to generate PoToken: {Error}", ex.Message);
+            }
+        }
+        
         await Task.Delay(-1);
     }
 
@@ -63,7 +78,7 @@ internal static class Program
         return stream;
     }
 
-    public static string GetOurYTDLPHash()
+    private static string GetOurYtdlpHash()
     {
         var stream = GetYtDlpStub();
         using var ms = new MemoryStream();

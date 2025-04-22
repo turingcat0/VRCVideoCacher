@@ -1,38 +1,56 @@
-﻿using System.Collections;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
-using Serilog;
-using Swan.Logging;
 using VRCVideoCacher.YTDL;
 
 namespace VRCVideoCacher.API;
 
-public class APIController : WebApiController
+public class ApiController : WebApiController
 {
-    private static readonly Serilog.ILogger Log = Program.Logger.ForContext("SourceContext", "APIController");
+    private static readonly Serilog.ILogger Log = Program.Logger.ForContext<ApiController>();
+    
+    [Route(HttpVerbs.Get, "/genpotoken")]
+    public async Task GenPoToken()
+    {
+        await PoTokenGenerator.GeneratePoToken();
+        await GetPoToken();
+    }
+
+    [Route(HttpVerbs.Get, "/getpotoken")]
+    public async Task GetPoToken()
+    {
+        var poToken = await PoTokenGenerator.GetPoToken();
+        await HttpContext.SendStringAsync(poToken, "text/plain", Encoding.UTF8);
+        Log.Information("Gave YT-DLP our PoToken: {PoToken}", poToken);
+    }
     
     [Route(HttpVerbs.Get, "/getvideo")]
     public async Task GetVideo()
     {
         var requestUrl = Request.QueryString["url"];
         var avPro = Request.QueryString["avpro"] == "True";
-        var videoInfo = await ytdlManager.GetVideoId(requestUrl);
+        if (string.IsNullOrEmpty(requestUrl))
+        {
+            Log.Error("No URL provided.");
+            await HttpContext.SendStringAsync("No URL provided.", "text/plain", Encoding.UTF8);
+            return;
+        }
+        Log.Information("Request URL: {URL}", requestUrl);
+        var videoInfo = await VideoId.GetVideoId(requestUrl);
         if (videoInfo == null)
         {
             Log.Information("Failed to get Video Info for URL: {URL}", requestUrl);
             return;
         }
         var fileName = $"{videoInfo.VideoId}.mp4";
-        var filePath = Path.Combine(ConfigManager.config.CachedAssetPath, fileName);
+        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
         var isCached = File.Exists(filePath);
 
         var willCache = true;
         if (isCached)
         {
-            var url = $"{ConfigManager.config.ytdlWebServerURL}{fileName}";
+            var url = $"{ConfigManager.Config.ytdlWebServerURL}{fileName}";
             Log.Information("Responding with Cached URL: {URL}", url);
             await HttpContext.SendStringAsync(url, "text/plain", Encoding.UTF8);
             return;
@@ -44,7 +62,7 @@ public class APIController : WebApiController
             willCache = false;
         }
 
-        if (ConfigManager.config.BlockedUrls.Contains(requestUrl))
+        if (ConfigManager.Config.BlockedUrls.Contains(requestUrl))
         {
             Console.Beep();
             Console.Beep();
@@ -59,12 +77,12 @@ public class APIController : WebApiController
             willCache = false;
         }
         
-        var responseUrl = ytdlManager.GetURL(requestUrl, avPro);
+        var responseUrl = await VideoId.GetUrl(requestUrl, avPro);
         Log.Information("Responding with URL: {URL}", responseUrl);
         await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);
         if (willCache)
         {
-            ytdlManager.QueueDownload(videoInfo);
+            VideoDownloader.QueueDownload(videoInfo);
         }
     }
 }

@@ -1,12 +1,14 @@
 ﻿using Swan.Logging;
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace VRCVideoCacher.API;
 
 public class WebServerLogger : ILogger
 {
+    public LogLevel LogLevel { get; } = LogLevel.Info;
+    
     public void Dispose()
     {
-        
     }
 
     public void Log(LogMessageReceivedEventArgs logEvent)
@@ -22,10 +24,6 @@ public class WebServerLogger : ILogger
             case LogLevel.Info:
                 WebServer.Log.Information(logEvent.Message);
                 break;
-            default:
-                break;
         }
     }
-
-    public LogLevel LogLevel { get; }
 }
