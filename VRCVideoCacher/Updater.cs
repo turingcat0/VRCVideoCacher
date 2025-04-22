@@ -1,5 +1,6 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Newtonsoft.Json;
+using Semver;
 using Serilog;
 using VRCVideoCacher.Models;
 
@@ -43,9 +44,10 @@ public class Updater
             Log.Error("Failed to parse update response.");
             return;
         }
-        var latestVersion = latestRelease.tag_name;
-        Log.Information("Latest release: {Latest}, Installed Version: {Installed}", latestVersion, Program.Version);
-        if (latestVersion == Program.Version)
+        var latestVersion = SemVersion.Parse(latestRelease.tag_name);
+        var currentVersion = SemVersion.Parse(Program.Version);
+        Log.Information("Latest release: {Latest}, Installed Version: {Installed}", latestVersion, currentVersion);
+        if (SemVersion.ComparePrecedence(currentVersion, latestVersion) >= 0)
         {
             Log.Information("No updates available.");
             return;

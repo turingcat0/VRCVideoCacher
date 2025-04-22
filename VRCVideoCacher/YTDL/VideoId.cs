@@ -16,7 +16,7 @@ public class VideoId
         DefaultRequestHeaders = { { "User-Agent", "VRCVideoCacher" } }
     };
     private static readonly string[] YouTubeHosts = ["youtube.com", "youtu.be", "www.youtube.com"];
-    private static readonly Regex YoutubeRegex = new(@"(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
+    private static readonly Regex YoutubeRegex = new(@"(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|live\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
 
     private static bool IsYouTubeUrl(string url)
     {

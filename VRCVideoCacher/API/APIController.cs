@@ -29,7 +29,7 @@ public class ApiController : WebApiController
     public async Task GetVideo()
     {
         var requestUrl = Request.QueryString["url"];
-        var avPro = Request.QueryString["avpro"] == "True";
+        var avPro = string.Compare(Request.QueryString["avpro"], "true", StringComparison.OrdinalIgnoreCase) == 0;
         if (string.IsNullOrEmpty(requestUrl))
         {
             Log.Error("No URL provided.");
