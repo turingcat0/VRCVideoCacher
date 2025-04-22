@@ -42,6 +42,7 @@ internal static class Program
         
         YtdlpHash = GetOurYtdlpHash();
         await YtdlManager.TryDownloadYtdlp();
+        AutoStartShortcut.TryUpdateShortcutPath();
         WebServer.Init();
         FileTools.BackupAndReplaceYtdl();
         await BulkPreCache.DownloadFileList();

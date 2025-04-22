@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using Microsoft.Win32;
 using Serilog;

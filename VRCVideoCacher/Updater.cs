@@ -21,7 +21,11 @@ public class Updater
     public static async Task CheckForUpdates()
     {
         Log.Information("Checking for updates...");
-        if(Program.Version.Contains("-dev"))
+        bool isDebug;
+#if DEBUG
+            isDebug = true;
+#endif
+        if (Program.Version.Contains("-dev") || isDebug)
         {
             Log.Information("Running in dev mode. Skipping update check.");
             return;

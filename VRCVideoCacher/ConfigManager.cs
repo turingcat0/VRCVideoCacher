@@ -8,8 +8,8 @@ public class ConfigManager
 {
     public static readonly ConfigModel Config;
     private static readonly ILogger Log = Program.Logger.ForContext<ConfigManager>();
-    private static readonly string ConfigFileName = "Config.json";
-    
+    private const string ConfigFileName = "Config.json";
+
     static ConfigManager()
     {
         Log.Information("Loading config...");
@@ -17,51 +17,63 @@ public class ConfigManager
         {
             Config = new ConfigModel();
             FirstRun();
-            SaveConfig(true);
         }
         else
         {
             var configFilePath = Path.Combine(Program.CurrentProcessPath, ConfigFileName);
             Config = JsonConvert.DeserializeObject<ConfigModel>(File.ReadAllText(configFilePath)) ?? new ConfigModel();
-            SaveConfig();
         }
         Log.Information("Loaded config.");
+        TrySaveConfig();
     }
 
-    public static void SaveConfig(bool silent = false)
+    private static void TrySaveConfig()
     {
-        if (!silent)
-            Log.Information("Saving config...");
+        var newConfig = JsonConvert.SerializeObject(Config, Formatting.Indented);
+        var oldConfig = File.Exists(ConfigFileName) ? File.ReadAllText(ConfigFileName) : string.Empty;
+        if (newConfig == oldConfig)
+            return;
+        
+        Log.Information("Config changed, saving...");
         File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(Config, Formatting.Indented));
+        Log.Information("Config saved.");
     }
     
-    public static void FirstRun()
+    private static void FirstRun()
     {
-        Log.Information("It appears this is your first time running VRCVideoCacher. Lets create a basic config file. ");
-        Log.Information("Would you like to cache Youtube Videos? (y/n)");
+        Log.Information("It appears this is your first time running VRCVideoCacher. Lets create a basic config file.");
+        
+        Log.Information("Would you like to cache/download Youtube videos? (Y/n):");
         var input = Console.ReadLine();
-        if (input?.ToLower() == "y")
+        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
             Config.CacheYouTube = true;
         else
             Config.CacheYouTube = false;
-        Log.Information("Would you like to cache PyPyDance Videos? (y/n)");
+        
+        Log.Information("Would you like to cache/download VRDancing & PyPyDance videos? (Y/n):");
         input = Console.ReadLine();
-        if (input?.ToLower() == "y")
-            Config.CachePyPyDance = true;
-        else
-            Config.CachePyPyDance = false;
-        Log.Information("Would you like to cache VRDancing Videos? (y/n)");
-        input = Console.ReadLine();
-        if (input?.ToLower() == "y")
+        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
+        {
             Config.CacheVRDancing = true;
+            Config.CachePyPyDance = true;
+        }
         else
+        {
             Config.CacheVRDancing = false;
-        Log.Information("Would you like to autogenerate a PoToken? (Requires Chrome to be installed) (y/n)");
+            Config.CachePyPyDance = false;
+        }
+
+        Log.Information("Would you like to autogenerate YouTube PoTokens? (This will fix bot errors, requires Chrome to be installed) (Y/n):");
         input = Console.ReadLine();
-        if (input?.ToLower() == "y")
+        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
             Config.ytdlGeneratePoToken = true;
         else
             Config.ytdlGeneratePoToken = false;
+        
+        Log.Information("Would you like to add VRCVideoCacher to VRCX auto start? (Y/n):");
+        input = Console.ReadLine();
+        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
+            AutoStartShortcut.CreateShortcut();
     }
 }
 
