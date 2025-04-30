@@ -39,7 +39,7 @@ public class PoTokenGenerator
         var pythonZip = await DownloadFile(PythonUrl);
         Log.Information("Extracting Python zip.");
         ZipFile.ExtractToDirectory(pythonZip, WorkingDirectory);
-        File.Delete(YtdlPoTokenPath);
+        File.Delete(pythonZip);
         
         Log.Information("Editing Python PATH.");
         var pathFile = Directory.EnumerateFiles(WorkingDirectory, "*._pth", SearchOption.TopDirectoryOnly).FirstOrDefault();
