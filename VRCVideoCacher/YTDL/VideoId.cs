@@ -185,6 +185,12 @@ public class VideoId
         if (!string.IsNullOrEmpty(poToken))
             poToken = $"po_token=web.player+{poToken}";
         
+        var cookieArg = string.Empty;
+        if (ConfigManager.Config.ytdlUseCookiesFromBrowserExtension)
+        {
+            cookieArg = "--cookies youtube_cookies.txt";
+        }
+
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var isYouTube = IsYouTubeUrl(url);
         // TODO: safety check for escaping strings
@@ -192,15 +198,15 @@ public class VideoId
         {
             if (isYouTube)
                 process.StartInfo.Arguments =
-                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web;{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web;{poToken}\" --no-playlist --no-warnings {additionalArgs} {cookieArg} --get-url {url}";
             else
                 process.StartInfo.Arguments =
-                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                    $"-f (mp4/best)[height<=?1080][height>=?64][width>=?64] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} {cookieArg} --get-url {url}";
         }
         else
         {
             process.StartInfo.Arguments =
-                $"-f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} --get-url {url}";
+                $"-f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} {cookieArg} --get-url {url}";
         }
         
         process.Start();

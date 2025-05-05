@@ -39,41 +39,41 @@ public class ConfigManager
         Log.Information("Config saved.");
     }
     
+    private static bool GetUserConfirmation(string prompt, bool defaultValue)
+    {
+        var defaultOption = defaultValue ? "Y/n" : "y/N";
+        var message = $"{prompt} ({defaultOption}):";
+        message = message.TrimStart();
+        Log.Information(message);
+        var input = Console.ReadLine();
+        return string.IsNullOrEmpty(input) ? defaultValue : input.Equals("y", StringComparison.CurrentCultureIgnoreCase);
+    }
+
     private static void FirstRun()
     {
         Log.Information("It appears this is your first time running VRCVideoCacher. Lets create a basic config file.");
-        
-        Log.Information("Would you like to cache/download Youtube videos? (Y/n):");
-        var input = Console.ReadLine();
-        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
-            Config.CacheYouTube = true;
-        else
-            Config.CacheYouTube = false;
-        
-        Log.Information("Would you like to cache/download VRDancing & PyPyDance videos? (Y/n):");
-        input = Console.ReadLine();
-        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
-        {
-            Config.CacheVRDancing = true;
-            Config.CachePyPyDance = true;
-        }
-        else
-        {
-            Config.CacheVRDancing = false;
-            Config.CachePyPyDance = false;
-        }
 
-        Log.Information("Would you like to autogenerate YouTube PoTokens? (This will fix bot errors, requires Chrome to be installed) (Y/n):");
-        input = Console.ReadLine();
-        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
-            Config.ytdlGeneratePoToken = true;
-        else
-            Config.ytdlGeneratePoToken = false;
-        
-        Log.Information("Would you like to add VRCVideoCacher to VRCX auto start? (Y/n):");
-        input = Console.ReadLine();
-        if (string.IsNullOrEmpty(input) || input.Equals("y", StringComparison.CurrentCultureIgnoreCase))
+        Config.CacheYouTube = GetUserConfirmation("Would you like to cache/download Youtube videos?", true);
+
+        var vrDancingPyPyChoice = GetUserConfirmation("Would you like to cache/download VRDancing & PyPyDance videos?", true);
+        Config.CacheVRDancing = vrDancingPyPyChoice;
+        Config.CachePyPyDance = vrDancingPyPyChoice;
+
+        Log.Information("Would you like to use the companion extension to fetch youtube cookies? (This will fix bot errors, requires installation of the extension)");
+        Log.Information("Extension can be found here: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
+        Config.ytdlUseCookiesFromBrowserExtension = GetUserConfirmation("", true);
+
+        Log.Information("Would you like to autogenerate YouTube PoTokens? (This will fix bot errors, requires Chrome to be installed)");
+        if (Config.ytdlUseCookiesFromBrowserExtension)
+        {
+            Log.Information("Not recommended for use in conjunction with the companion extension (!).");
+        }
+        Config.ytdlGeneratePoToken = GetUserConfirmation("", !Config.ytdlUseCookiesFromBrowserExtension);
+
+        if (GetUserConfirmation("Would you like to add VRCVideoCacher to VRCX auto start?", true))
+        {
             AutoStartShortcut.CreateShortcut();
+        }
     }
 }
 
@@ -83,6 +83,7 @@ public class ConfigModel
     public string ytdlWebServerURL = "http://localhost:9696/";
     public string ytdlPath = "Utils/yt-dlp.exe";
     public bool ytdlGeneratePoToken = true;
+    public bool ytdlUseCookiesFromBrowserExtension = false;
     public string ytdlAdditionalArgs = string.Empty;
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
