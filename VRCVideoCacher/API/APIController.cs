@@ -40,13 +40,14 @@ public class ApiController : WebApiController
             return;
         }
         Log.Information("Request URL: {URL}", requestUrl);
-        var videoInfo = await VideoId.GetVideoId(requestUrl);
+        var videoInfo = await VideoId.GetVideoId(requestUrl, avPro);
         if (videoInfo == null)
         {
             Log.Information("Failed to get Video Info for URL: {URL}", requestUrl);
             return;
         }
-        var fileName = $"{videoInfo.VideoId}.mp4";
+        var ext = avPro ? "webm" : "mp4";
+        var fileName = $"{videoInfo.VideoId}.{ext}";
         var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
         var isCached = File.Exists(filePath);
 

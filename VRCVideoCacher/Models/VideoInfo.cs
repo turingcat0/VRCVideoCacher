@@ -14,4 +14,5 @@ public class VideoInfo
     public required string VideoUrl;
     public required string VideoId;
     public required UrlType UrlType;
+    public required bool IsAvpro;
 }
