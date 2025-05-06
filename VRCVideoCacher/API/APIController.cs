@@ -10,6 +10,24 @@ public class ApiController : WebApiController
 {
     private static readonly Serilog.ILogger Log = Program.Logger.ForContext<ApiController>();
     
+    [Route(HttpVerbs.Post, "/youtube-cookies")]
+    public async Task ReceiveYoutubeCookies()
+    {
+        using var reader = new StreamReader(HttpContext.OpenRequestStream(), Encoding.UTF8);
+        var cookies = await reader.ReadToEndAsync();
+
+        await File.WriteAllTextAsync("youtube_cookies.txt", cookies);
+
+        HttpContext.Response.StatusCode = 200;
+        await HttpContext.SendStringAsync("Cookies received.", "text/plain", Encoding.UTF8);
+
+        Log.Information("Received Youtube cookies from browser extension.");
+        if (!ConfigManager.Config.ytdlUseCookiesFromBrowserExtension)
+        {
+            Log.Warning("Config is NOT set to use cookies from browser extension.");
+        }
+    }
+
     [Route(HttpVerbs.Get, "/genpotoken")]
     public async Task GenPoToken()
     {
