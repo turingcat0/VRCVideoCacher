@@ -196,7 +196,7 @@ public class VideoId
         // TODO: safety check for escaping strings
         if (avPro)
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\"--no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }
         else
         {
