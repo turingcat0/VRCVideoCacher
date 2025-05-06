@@ -75,7 +75,7 @@ public class ConfigModel
 {
     public string ytdlWebServerURL = "http://localhost:9696/";
     public string ytdlPath = "Utils/yt-dlp.exe";
-    public bool ytdlUseCookies = false;
+    public bool ytdlUseCookies = true;
     public string ytdlAdditionalArgs = string.Empty;
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };

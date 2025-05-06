@@ -4,6 +4,8 @@ VRCVideoCacher is a tool to cache VRChat videos to your local disk and fix YouTu
 
 This is done via a Stubbed yt-dlp executable replaced on start of the application and restored on exit.
 
+Fixing YouTube bot errors requires a Chrome extension that you can grab from [here](https://chromewebstore.google.com/detail/vrcvideocacher-cookies-ex/kfgelknbegappcajiflgfbjbdpbpokge)
+
 Generate PoToken has been [deprecated](https://github.com/iv-org/youtube-trusted-session-generator?tab=readme-ov-file#tool-is-deprecated)
 
 ### Config
