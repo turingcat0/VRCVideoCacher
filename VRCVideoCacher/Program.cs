@@ -48,17 +48,18 @@ internal static class Program
         await BulkPreCache.DownloadFileList();
         _ = YtdlManager.TryDownloadFfmpeg();
 
-        if (ConfigManager.Config.ytdlGeneratePoToken)
-        {
-            try
-            {
-                await PoTokenGenerator.TryGeneratePoToken();
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to generate PoToken: {Error}", ex.Message);
-            }
-        }
+        // TODO: get cookies at startup if needed
+        // if (ConfigManager.Config.ytdlGeneratePoToken)
+        // {
+        //     try
+        //     {
+        //         await PoTokenGenerator.TryGeneratePoToken();
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Logger.Error("Failed to generate PoToken: {Error}", ex.Message);
+        //     }
+        // }
         
         await Task.Delay(-1);
     }

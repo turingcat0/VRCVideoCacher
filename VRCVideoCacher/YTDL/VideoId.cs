@@ -184,28 +184,23 @@ public class VideoId
         };
 
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
-        var poToken = string.Empty;
-        if (ConfigManager.Config.ytdlGeneratePoToken)
-            poToken = await PoTokenGenerator.GetPoToken();
-        if (!string.IsNullOrEmpty(poToken))
-            poToken = $"po_token=web.player+{poToken}";
-        
+
         var cookieArg = string.Empty;
-        if (ConfigManager.Config.ytdlUseCookiesFromBrowserExtension)
+        if (ConfigManager.Config.ytdlUseCookies)
         {
             cookieArg = "--cookies youtube_cookies.txt";
         }
 
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
-        var isYouTube = IsYouTubeUrl(url);
+        // var isYouTube = IsYouTubeUrl(url);
         // TODO: safety check for escaping strings
         if (avPro)
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web;{poToken}\" --no-playlist --no-warnings {additionalArgs} {cookieArg} --get-url {url}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\"--no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }
         else
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --extractor-args=\"youtube:{poToken}\" --no-playlist --no-warnings {additionalArgs} {cookieArg} --get-url {url}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }
         
         process.Start();
@@ -217,21 +212,22 @@ public class VideoId
         
         Log.Information("Started yt-dlp with args: {args}", process.StartInfo.Arguments);
 
-        if (error.StartsWith("WARNING: ") ||
-            error.StartsWith("ERROR: "))
-        {
-            Log.Error("YouTube Get URL: {error}", error);
-            if (ConfigManager.Config.ytdlGeneratePoToken &&
-                error.Contains("Sign in to confirm you’re not a bot") &&
-                !isRetry)
-            {
-                await PoTokenGenerator.GeneratePoToken();
-                Log.Information("Retrying with new POToken...");
-                return await GetUrl(url, avPro, true);
-            }
-
-            return string.Empty;
-        }
+        // TODO: retry cookie fetch
+        // if (error.StartsWith("WARNING: ") ||
+        //     error.StartsWith("ERROR: "))
+        // {
+        //     Log.Error("YouTube Get URL: {error}", error);
+        //     if (ConfigManager.Config.ytdlGeneratePoToken &&
+        //         error.Contains("Sign in to confirm you’re not a bot") &&
+        //         !isRetry)
+        //     {
+        //         await PoTokenGenerator.GeneratePoToken();
+        //         Log.Information("Retrying with new POToken...");
+        //         return await GetUrl(url, avPro, true);
+        //     }
+        //
+        //     return string.Empty;
+        // }
         
         if (process.ExitCode != 0)
         {

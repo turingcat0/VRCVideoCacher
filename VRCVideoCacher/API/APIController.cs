@@ -22,25 +22,10 @@ public class ApiController : WebApiController
         await HttpContext.SendStringAsync("Cookies received.", "text/plain", Encoding.UTF8);
 
         Log.Information("Received Youtube cookies from browser extension.");
-        if (!ConfigManager.Config.ytdlUseCookiesFromBrowserExtension)
+        if (!ConfigManager.Config.ytdlUseCookies)
         {
             Log.Warning("Config is NOT set to use cookies from browser extension.");
         }
-    }
-
-    [Route(HttpVerbs.Get, "/genpotoken")]
-    public async Task GenPoToken()
-    {
-        await PoTokenGenerator.GeneratePoToken();
-        await GetPoToken();
-    }
-
-    [Route(HttpVerbs.Get, "/getpotoken")]
-    public async Task GetPoToken()
-    {
-        var poToken = await PoTokenGenerator.GetPoToken();
-        await HttpContext.SendStringAsync(poToken, "text/plain", Encoding.UTF8);
-        Log.Information("Gave YT-DLP our PoToken: {PoToken}", poToken);
     }
     
     [Route(HttpVerbs.Get, "/getvideo")]

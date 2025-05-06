@@ -61,14 +61,7 @@ public class ConfigManager
 
         Log.Information("Would you like to use the companion extension to fetch youtube cookies? (This will fix bot errors, requires installation of the extension)");
         Log.Information("Extension can be found here: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
-        Config.ytdlUseCookiesFromBrowserExtension = GetUserConfirmation("", true);
-
-        Log.Information("Would you like to autogenerate YouTube PoTokens? (This will fix bot errors, requires Chrome to be installed)");
-        if (Config.ytdlUseCookiesFromBrowserExtension)
-        {
-            Log.Information("Not recommended for use in conjunction with the companion extension (!).");
-        }
-        Config.ytdlGeneratePoToken = GetUserConfirmation("", !Config.ytdlUseCookiesFromBrowserExtension);
+        Config.ytdlUseCookies = GetUserConfirmation("", true);
 
         if (GetUserConfirmation("Would you like to add VRCVideoCacher to VRCX auto start?", true))
         {
@@ -82,8 +75,7 @@ public class ConfigModel
 {
     public string ytdlWebServerURL = "http://localhost:9696/";
     public string ytdlPath = "Utils/yt-dlp.exe";
-    public bool ytdlGeneratePoToken = true;
-    public bool ytdlUseCookiesFromBrowserExtension = false;
+    public bool ytdlUseCookies = false;
     public string ytdlAdditionalArgs = string.Empty;
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
