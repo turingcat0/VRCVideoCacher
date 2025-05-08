@@ -113,7 +113,7 @@ public class VideoId
                 return null;
             }
             videoId = videoId.Length > 11 ? videoId.Substring(0, 11) : videoId;
-            var extension = avPro ? ".webm" : ".mp4";
+            var extension = avPro ? "webm" : "mp4";
             var fileName = $"{videoId}.{extension}";
             return new VideoInfo
             {
@@ -168,10 +168,10 @@ public class VideoId
         var data = JsonConvert.DeserializeObject<dynamic>(rawData);
         if (data is null || data.id is null)
             throw new Exception("Failed to get video ID");
-        if (data.is_live is true || data.was_live is true)
+        if (data.is_live is true)
             throw new Exception("Failed to get video ID: Video is a stream");
-        if (data.duration is null || data.duration > 3600 * 2)
-            throw new Exception("Failed to get video ID: Video is too long ");
+        if (data.duration is null || data.duration > ConfigManager.Config.CacheYouTubeMaxLength)
+            throw new Exception($"Failed to get video ID: Video is longer than configured max length ({data.duration}/{ConfigManager.Config.CacheYouTubeMaxLength})");
         
         return data.id;
     }
@@ -182,8 +182,9 @@ public class VideoId
     // 4k video
     // https://www.youtube.com/watch?v=i1csLh-0L9E
 
-    public static async Task<string> GetUrl(string url, bool avPro, bool isRetry = false)
+    public static async Task<string> GetUrl(VideoInfo videoInfo)
     {
+        var url = videoInfo.VideoUrl;
         // if url contains "results?" then it's a search
         if (url.Contains("results?"))
         {
@@ -208,11 +209,11 @@ public class VideoId
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
-        if (Program.IsCookiesEnabledAndValid())
+        if (Program.IsCookiesEnabledAndValid() && videoInfo.UrlType == UrlType.YouTube)
             cookieArg = "--cookies youtube_cookies.txt";
         
         // TODO: safety check for escaping strings
-        if (avPro)
+        if (videoInfo.IsAvpro)
         {
             process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }

@@ -86,6 +86,7 @@ public class ConfigModel
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
     public bool CacheYouTube = true;
     public int CacheYouTubeMaxResolution = 2160;
+    public int CacheYouTubeMaxLength = 7200;
     public bool CachePyPyDance = true;
     public bool CacheVRDancing = true;
 

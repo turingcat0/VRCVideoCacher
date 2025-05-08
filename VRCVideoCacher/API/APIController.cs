@@ -86,7 +86,7 @@ public class ApiController : WebApiController
             willCache = false;
         }
         
-        var responseUrl = await VideoId.GetUrl(requestUrl, avPro);
+        var responseUrl = await VideoId.GetUrl(videoInfo);
         Log.Information("Responding with URL: {URL}", responseUrl);
         await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);
         if (willCache)

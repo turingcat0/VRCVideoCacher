@@ -118,7 +118,8 @@ public class VideoDownloader
         
         if (videoInfo.IsAvpro && Program.IsCookiesEnabledAndValid())
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadWebmPath} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^av01'][ext=mp4][dynamic_range='SDR']+ba[acodec=opus][ext=webm]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='vp9'][ext=webm][dynamic_range='SDR']+ba[acodec=opus][ext=webm]\" --no-playlist --extractor-args \"youtube:formats=missing_pot;player_client=web,mweb\" --no-progress {cookieArg} {additionalArgs} -- {videoId}";
+            // process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadMp4Path} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec!=av01][vcodec!=vp9.2][protocol^=http]\" --no-playlist --remux-video mp4 --no-progress {cookieArg} {additionalArgs} -- {videoId}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadWebmPath} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^av01'][ext=mp4][dynamic_range='SDR']+ba[acodec=opus][ext=webm]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='vp9'][ext=webm][dynamic_range='SDR']+ba[acodec=opus][ext=webm]\" --no-playlist --no-progress {cookieArg} {additionalArgs} -- {videoId}";
         }
         else
         {
@@ -134,7 +135,7 @@ public class VideoDownloader
         error = error.Trim();
         if (process.ExitCode != 0)
         {
-            Log.Error("Failed to download YouTube Video: {exitCode} {URL} {output}", process.ExitCode, url, error);
+            Log.Error("Failed to download YouTube Video: {exitCode} {URL} {error}", process.ExitCode, url, error);
             if (error.Contains("Sign in to confirm you’re not a bot"))
                 Log.Error("Fix this error by following these instructions: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
             
