@@ -140,7 +140,7 @@ public class VideoId
     {
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
-        if (ConfigManager.Config.ytdlUseCookies)
+        if (Program.IsCookiesEnabledAndValid())
             cookieArg = "--cookies youtube_cookies.txt";
 
         var process = new Process
@@ -208,7 +208,7 @@ public class VideoId
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
-        if (ConfigManager.Config.ytdlUseCookies)
+        if (Program.IsCookiesEnabledAndValid())
             cookieArg = "--cookies youtube_cookies.txt";
         
         // TODO: safety check for escaping strings

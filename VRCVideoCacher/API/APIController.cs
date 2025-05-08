@@ -15,7 +15,8 @@ public class ApiController : WebApiController
     {
         using var reader = new StreamReader(HttpContext.OpenRequestStream(), Encoding.UTF8);
         var cookies = await reader.ReadToEndAsync();
-        await File.WriteAllTextAsync("youtube_cookies.txt", cookies);
+        var path = Path.Combine(Program.CurrentProcessPath, "youtube_cookies.txt");
+        await File.WriteAllTextAsync(path, cookies);
 
         HttpContext.Response.StatusCode = 200;
         await HttpContext.SendStringAsync("Cookies received.", "text/plain", Encoding.UTF8);

@@ -48,20 +48,29 @@ internal static class Program
         await BulkPreCache.DownloadFileList();
         _ = YtdlManager.TryDownloadFfmpeg();
 
-        // TODO: get cookies at startup if needed
-        // if (ConfigManager.Config.ytdlGeneratePoToken)
-        // {
-        //     try
-        //     {
-        //         await PoTokenGenerator.TryGeneratePoToken();
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Logger.Error("Failed to generate PoToken: {Error}", ex.Message);
-        //     }
-        // }
+        if (!IsCookiesEnabledAndValid())
+            Log.Warning("No cookies found, please use the browser extension to send cookies or disable \"ytdlUseCookies\" in config.");
         
         await Task.Delay(-1);
+    }
+
+    public static bool IsCookiesEnabledAndValid()
+    {
+        if (!ConfigManager.Config.ytdlUseCookies)
+            return false;
+        
+        var cookiesPath = Path.Combine(CurrentProcessPath, "youtube_cookies.txt");
+        if (!File.Exists(cookiesPath))
+            return false;
+        
+        var cookies = File.ReadAllText(cookiesPath);
+        if (string.IsNullOrEmpty(cookies))
+            return false;
+        
+        if (cookies.Contains("youtube.com") && cookies.Contains("LOGIN_INFO"))
+            return true;
+        
+        return false;
     }
 
     public static Stream GetYtDlpStub()
