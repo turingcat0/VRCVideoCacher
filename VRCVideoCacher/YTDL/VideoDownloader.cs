@@ -14,13 +14,11 @@ public class VideoDownloader
         DefaultRequestHeaders = { { "User-Agent", "VRCVideoCacher" } }
     };
     private static readonly Queue<VideoInfo> DownloadQueue = new();
-    private static readonly string TempDownloadPathAvPro;
-    private static readonly string TempDownloadPathUPlayer;
+    private static readonly string TempDownloadPath;
     
     static VideoDownloader()
     {
-        TempDownloadPathAvPro = Path.Combine(ConfigManager.Config.CachedAssetPath, "_tempVideo.webm");
-        TempDownloadPathUPlayer = Path.Combine(ConfigManager.Config.CachedAssetPath, "_tempVideo.mp4");
+        TempDownloadPath = Path.Combine(ConfigManager.Config.CachedAssetPath, "_tempVideo");
         var downloadThread = new Thread(DownloadThread);
         downloadThread.Start();
     }
@@ -40,7 +38,7 @@ public class VideoDownloader
             {
                 case UrlType.YouTube:
                     if (ConfigManager.Config.CacheYouTube)
-                        DownloadYouTubeVideo(queueItem.VideoUrl, queueItem.IsAvpro).Wait();
+                        DownloadYouTubeVideo(queueItem).Wait();
                     break;
                 case UrlType.PyPyDance:
                     if (ConfigManager.Config.CachePyPyDance)
@@ -70,8 +68,9 @@ public class VideoDownloader
         DownloadQueue.Enqueue(videoInfo);
     }
 
-    private static async Task DownloadYouTubeVideo(string url, bool isAvpro, bool isRetry = false)
+    private static async Task DownloadYouTubeVideo(VideoInfo videoInfo)
     {
+        var url = videoInfo.VideoUrl;
         string? videoId;
         try
         {
@@ -83,26 +82,20 @@ public class VideoDownloader
             return;
         }
 
-        if (File.Exists(TempDownloadPathAvPro))
+        if (File.Exists(TempDownloadPath))
         {
             Log.Error("Temp file already exists, deleting...");
-            File.Delete(TempDownloadPathAvPro);
-        }
-
-        if (File.Exists(TempDownloadPathUPlayer))
-        {
-            Log.Error("Temp file already exists, deleting...");
-            File.Delete(TempDownloadPathUPlayer);
+            File.Delete(TempDownloadPath);
         }
 
         Log.Information("Downloading YouTube Video: {URL}", url);
 
+        var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
         if (ConfigManager.Config.ytdlUseCookies)
             cookieArg = "--cookies youtube_cookies.txt";
-
-        var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
-        var p = new Process
+        
+        var process = new Process
         {
             StartInfo =
             {
@@ -116,77 +109,50 @@ public class VideoDownloader
             }
         };
 
-        if (isAvpro)
+        if (videoInfo.IsAvpro)
         {
-            p.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadPathAvPro} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^av01'][ext=mp4][dynamic_range='SDR']+ba[acodec=opus][ext=webm]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='vp9'][ext=webm][dynamic_range='SDR']+ba[acodec=opus][ext=webm]\" --no-playlist --extractor-args \"youtube:formats=missing_pot;player_client=web,mweb\" --no-progress {cookieArg} {additionalArgs} -- {videoId}";
-            Log.Information("Here be dragons :3 : {args}", p.StartInfo.Arguments);
+            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadPath} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^av01'][ext=mp4][dynamic_range='SDR']+ba[acodec=opus][ext=webm]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='vp9'][ext=webm][dynamic_range='SDR']+ba[acodec=opus][ext=webm]\" --no-playlist --extractor-args \"youtube:formats=missing_pot;player_client=web,mweb\" --no-progress {cookieArg} {additionalArgs} -- {videoId}";
         }
         else
         {
             // Potato mode.
-            p.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadPathUPlayer} -f \"bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http]\" --no-playlist --remux-video mp4 --no-progress {cookieArg} {additionalArgs} -- {videoId}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadPath} -f \"bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http]\" --no-playlist --remux-video mp4 --no-progress {cookieArg} {additionalArgs} -- {videoId}";
             // $@"-f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings {url} " %(id)s.%(ext)s
         }
 
-        p.Start();
-        await p.WaitForExitAsync();
-        var output = await p.StandardOutput.ReadToEndAsync();
-        // TODO: retry cookie fetch
-        // if (output.StartsWith("WARNING: ") ||
-        //     output.StartsWith("ERROR: "))
-        // {
-        //     Log.Error("YouTube failed to download: {output}", output);
-        //     if (ConfigManager.Config.ytdlGeneratePoToken &&
-        //         output.Contains("Sign in to confirm you’re not a bot") &&
-        //         !isRetry)
-        //     {
-        //         await PoTokenGenerator.GeneratePoToken();
-        //         Log.Information("Retrying with new POToken...");
-        //         await DownloadYouTubeVideo(url, true);
-        //         return;
-        //     }
-        // }
-        var error = await p.StandardError.ReadToEndAsync();
-        if (!string.IsNullOrEmpty(error) && error.Contains("Requested format is not available"))
+        process.Start();
+        await process.WaitForExitAsync();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        error = error.Trim();
+        if (process.ExitCode != 0)
         {
             Log.Error("Failed to download YouTube Video: {URL} {output}", url, error);
+            if (error.Contains("Sign in to confirm you’re not a bot"))
+                Log.Error("Fix this error by following these instructions: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
+            
             return;
         }
 
         Thread.Sleep(10);
-        if (isAvpro && !File.Exists(TempDownloadPathAvPro))
+        if (!File.Exists(TempDownloadPath))
         {
             Log.Error("Failed to download YouTube Video: {URL}", url);
             return;
         }
 
-        if(!isAvpro && !File.Exists(TempDownloadPathUPlayer))
-        {
-            Log.Error("Failed to download YouTube Video: {URL}", url);
-            return;
-        }
+        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, videoInfo.FileName);
+        File.Move(TempDownloadPath, filePath);
 
-        var ext = isAvpro ? "webm" : "mp4";
-        var fileName = $"{videoId}.{ext}";
-        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
-
-        File.Move(isAvpro ? TempDownloadPathAvPro : TempDownloadPathUPlayer, filePath);
-
-        Log.Information("YouTube Video Downloaded: {URL}", $"{ConfigManager.Config.ytdlWebServerURL}{fileName}");
+        Log.Information("YouTube Video Downloaded: {URL}", $"{ConfigManager.Config.ytdlWebServerURL}{videoInfo.FileName}");
     }
     
     private static async Task DownloadVideoWithId(VideoInfo videoInfo)
     {
-        if (videoInfo.IsAvpro && File.Exists(TempDownloadPathAvPro))
+        if (File.Exists(TempDownloadPath))
         {
             Log.Error("Temp file already exists, deleting...");
-            File.Delete(TempDownloadPathAvPro);
-        }
-
-        if (!videoInfo.IsAvpro && File.Exists(TempDownloadPathUPlayer))
-        {
-            Log.Error("Temp file already exists, deleting...");
-            File.Delete(TempDownloadPathAvPro);
+            File.Delete(TempDownloadPath);
         }
 
         Log.Information("Downloading Video: {URL}", videoInfo.VideoUrl);
@@ -197,15 +163,15 @@ public class VideoDownloader
             Log.Error("Failed to download video: {URL}", url);
             return;
         }
-        var stream = await response.Content.ReadAsStreamAsync();
-        await using var fileStream = new FileStream(videoInfo.IsAvpro ? TempDownloadPathAvPro : TempDownloadPathUPlayer, FileMode.Create, FileAccess.Write, FileShare.None);
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        await using var fileStream = new FileStream(TempDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None);
         await stream.CopyToAsync(fileStream);
         fileStream.Close();
         await Task.Delay(10);
-        var ext = videoInfo.IsAvpro ? "webm" : "mp4";
-        var fileName = $"{videoInfo.VideoId}.{ext}";
-        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
-        File.Move(videoInfo.IsAvpro ? TempDownloadPathAvPro : TempDownloadPathUPlayer, filePath);
-        Log.Information("Video Downloaded: {URL}", $"{ConfigManager.Config.ytdlWebServerURL}{fileName}");
+        
+        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, videoInfo.FileName);
+        File.Move(TempDownloadPath, filePath);
+        Log.Information("Video Downloaded: {URL}", $"{ConfigManager.Config.ytdlWebServerURL}{videoInfo.FileName}");
     }
 }

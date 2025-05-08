@@ -103,7 +103,7 @@ public class YtdlManager
             if (assetVersion.name != "yt-dlp.exe")
                 continue;
             
-            var stream = await HttpClient.GetStreamAsync(assetVersion.browser_download_url);
+            await using var stream = await HttpClient.GetStreamAsync(assetVersion.browser_download_url);
             var path = Path.GetDirectoryName(ConfigManager.Config.ytdlPath);
             if (string.IsNullOrEmpty(path))
                 throw new Exception("Failed to get YT-DLP path");

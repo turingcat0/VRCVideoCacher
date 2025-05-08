@@ -66,7 +66,8 @@ public class VideoId
                     VideoUrl = videoUrl,
                     VideoId = pypyVideoId,
                     UrlType = UrlType.PyPyDance,
-                    IsAvpro = avPro
+                    IsAvpro = avPro,
+                    FileName = fileName
                 };
             }
             catch
@@ -79,12 +80,14 @@ public class VideoId
         if (url.StartsWith("https://na2.vrdancing.club") ||
             url.StartsWith("https://eu2.vrdancing.club"))
         {
+            var videoId = HashUrl(url);
             return new VideoInfo
             {
                 VideoUrl = url,
-                VideoId = HashUrl(url),
+                VideoId = videoId,
                 UrlType = UrlType.VRDancing,
-                IsAvpro = avPro
+                IsAvpro = avPro,
+                FileName = $"{videoId}.mp4"
             };
         }
         
@@ -110,33 +113,35 @@ public class VideoId
                 return null;
             }
             videoId = videoId.Length > 11 ? videoId.Substring(0, 11) : videoId;
+            var extension = avPro ? ".webm" : ".mp4";
+            var fileName = $"{videoId}.{extension}";
             return new VideoInfo
             {
                 VideoUrl = url,
                 VideoId = videoId,
                 UrlType = UrlType.YouTube,
-                IsAvpro = avPro
+                IsAvpro = avPro,
+                FileName = fileName
             };
         }
-        
+
+        var urlHash = HashUrl(url);
         return new VideoInfo
         {
             VideoUrl = url,
-            VideoId = HashUrl(url),
+            VideoId = urlHash,
             UrlType = UrlType.Other,
-            IsAvpro = avPro
+            IsAvpro = avPro,
+            FileName = $"{urlHash}.mp4"
         };
     }
 
     public static async Task<string> TryGetYouTubeVideoId(string url)
     {
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
-
         var cookieArg = string.Empty;
         if (ConfigManager.Config.ytdlUseCookies)
-        {
             cookieArg = "--cookies youtube_cookies.txt";
-        }
 
         var process = new Process
         {
@@ -201,14 +206,11 @@ public class VideoId
         };
 
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
-
+        var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
         if (ConfigManager.Config.ytdlUseCookies)
-        {
             cookieArg = "--cookies youtube_cookies.txt";
-        }
-
-        var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
+        
         // TODO: safety check for escaping strings
         if (avPro)
         {
@@ -227,27 +229,13 @@ public class VideoId
         await process.WaitForExitAsync();
         
         Log.Information("Started yt-dlp with args: {args}", process.StartInfo.Arguments);
-
-        // TODO: retry cookie fetch
-        // if (error.StartsWith("WARNING: ") ||
-        //     error.StartsWith("ERROR: "))
-        // {
-        //     Log.Error("YouTube Get URL: {error}", error);
-        //     if (ConfigManager.Config.ytdlGeneratePoToken &&
-        //         error.Contains("Sign in to confirm you’re not a bot") &&
-        //         !isRetry)
-        //     {
-        //         await PoTokenGenerator.GeneratePoToken();
-        //         Log.Information("Retrying with new POToken...");
-        //         return await GetUrl(url, avPro, true);
-        //     }
-        //
-        //     return string.Empty;
-        // }
         
         if (process.ExitCode != 0)
         {
             Log.Error("YouTube Get URL: {error}", error);
+            if (error.Contains("Sign in to confirm you’re not a bot"))
+                Log.Error("Fix this error by following these instructions: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
+            
             return string.Empty;
         }
 

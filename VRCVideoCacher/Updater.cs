@@ -78,7 +78,7 @@ public class Updater
             File.Move(FilePath, BackupFilePath);
             try
             {
-                var stream = await HttpClient.GetStreamAsync(asset.browser_download_url);
+                await using var stream = await HttpClient.GetStreamAsync(asset.browser_download_url);
                 await using var fileStream = new FileStream(FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
                 await stream.CopyToAsync(fileStream);
                 fileStream.Close();
