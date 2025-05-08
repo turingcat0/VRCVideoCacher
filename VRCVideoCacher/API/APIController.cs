@@ -47,6 +47,13 @@ public class ApiController : WebApiController
         var fileName = $"{videoInfo.VideoId}.{ext}";
         var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
         var isCached = File.Exists(filePath);
+        if (avPro && !isCached)
+        {
+            // retry with .mp4
+            fileName = $"{videoInfo.VideoId}.mp4";
+            filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
+            isCached = File.Exists(filePath);
+        }
 
         var willCache = true;
         if (isCached)
