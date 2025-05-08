@@ -48,7 +48,7 @@ internal static class Program
         await BulkPreCache.DownloadFileList();
         _ = YtdlManager.TryDownloadFfmpeg();
 
-        if (!IsCookiesEnabledAndValid())
+        if (ConfigManager.Config.ytdlUseCookies && !IsCookiesEnabledAndValid())
             Log.Warning("No cookies found, please use the browser extension to send cookies or disable \"ytdlUseCookies\" in config.");
         
         await Task.Delay(-1);

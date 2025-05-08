@@ -66,8 +66,7 @@ public class VideoId
                     VideoUrl = videoUrl,
                     VideoId = pypyVideoId,
                     UrlType = UrlType.PyPyDance,
-                    IsAvpro = avPro,
-                    FileName = fileName
+                    DownloadFormat = DownloadFormat.MP4
                 };
             }
             catch
@@ -86,8 +85,7 @@ public class VideoId
                 VideoUrl = url,
                 VideoId = videoId,
                 UrlType = UrlType.VRDancing,
-                IsAvpro = avPro,
-                FileName = $"{videoId}.mp4"
+                DownloadFormat = DownloadFormat.MP4
             };
         }
         
@@ -113,15 +111,12 @@ public class VideoId
                 return null;
             }
             videoId = videoId.Length > 11 ? videoId.Substring(0, 11) : videoId;
-            var extension = avPro ? "webm" : "mp4";
-            var fileName = $"{videoId}.{extension}";
             return new VideoInfo
             {
                 VideoUrl = url,
                 VideoId = videoId,
                 UrlType = UrlType.YouTube,
-                IsAvpro = avPro,
-                FileName = fileName
+                DownloadFormat = avPro ? DownloadFormat.Webm : DownloadFormat.MP4,
             };
         }
 
@@ -131,8 +126,7 @@ public class VideoId
             VideoUrl = url,
             VideoId = urlHash,
             UrlType = UrlType.Other,
-            IsAvpro = avPro,
-            FileName = $"{urlHash}.mp4"
+            DownloadFormat = DownloadFormat.MP4,
         };
     }
 
@@ -182,7 +176,7 @@ public class VideoId
     // 4k video
     // https://www.youtube.com/watch?v=i1csLh-0L9E
 
-    public static async Task<string> GetUrl(VideoInfo videoInfo)
+    public static async Task<string> GetUrl(VideoInfo videoInfo, bool avPro)
     {
         var url = videoInfo.VideoUrl;
         // if url contains "results?" then it's a search
@@ -213,7 +207,7 @@ public class VideoId
             cookieArg = "--cookies youtube_cookies.txt";
         
         // TODO: safety check for escaping strings
-        if (videoInfo.IsAvpro)
+        if (avPro)
         {
             process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }

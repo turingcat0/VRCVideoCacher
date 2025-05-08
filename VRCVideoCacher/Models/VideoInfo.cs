@@ -9,11 +9,16 @@ public enum UrlType
     Other
 }
 
+public enum DownloadFormat
+{
+    MP4,
+    Webm
+}
+
 public class VideoInfo
 {
     public required string VideoUrl;
     public required string VideoId;
     public required UrlType UrlType;
-    public required bool IsAvpro;
-    public required string FileName;
+    public required DownloadFormat DownloadFormat;
 }
