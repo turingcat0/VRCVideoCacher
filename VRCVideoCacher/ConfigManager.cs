@@ -54,6 +54,11 @@ public class ConfigManager
         Log.Information("It appears this is your first time running VRCVideoCacher. Lets create a basic config file.");
 
         Config.CacheYouTube = GetUserConfirmation("Would you like to cache/download Youtube videos?", true);
+        if (Config.CacheYouTube)
+        {
+            var maxResolution = GetUserConfirmation("Would you like to cache/download Youtube videos in 4k?", true);
+            Config.CacheYouTubeMaxResolution = maxResolution ? 2160 : 1080;
+        }
 
         var vrDancingPyPyChoice = GetUserConfirmation("Would you like to cache/download VRDancing & PyPyDance videos?", true);
         Config.CacheVRDancing = vrDancingPyPyChoice;
@@ -80,6 +85,7 @@ public class ConfigModel
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
     public bool CacheYouTube = true;
+    public int CacheYouTubeMaxResolution = 2160;
     public bool CachePyPyDance = true;
     public bool CacheVRDancing = true;
 

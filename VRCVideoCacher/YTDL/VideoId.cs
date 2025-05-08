@@ -41,7 +41,7 @@ public class VideoId
             .Replace("=", "");
     }
     
-    public static async Task<VideoInfo?> GetVideoId(string url)
+    public static async Task<VideoInfo?> GetVideoId(string url, bool avPro)
     {
         url = url.Trim();
         
@@ -65,7 +65,8 @@ public class VideoId
                 {
                     VideoUrl = videoUrl,
                     VideoId = pypyVideoId,
-                    UrlType = UrlType.PyPyDance
+                    UrlType = UrlType.PyPyDance,
+                    IsAvpro = avPro
                 };
             }
             catch
@@ -82,7 +83,8 @@ public class VideoId
             {
                 VideoUrl = url,
                 VideoId = HashUrl(url),
-                UrlType = UrlType.VRDancing
+                UrlType = UrlType.VRDancing,
+                IsAvpro = avPro
             };
         }
         
@@ -112,7 +114,8 @@ public class VideoId
             {
                 VideoUrl = url,
                 VideoId = videoId,
-                UrlType = UrlType.YouTube
+                UrlType = UrlType.YouTube,
+                IsAvpro = avPro
             };
         }
         
@@ -120,19 +123,27 @@ public class VideoId
         {
             VideoUrl = url,
             VideoId = HashUrl(url),
-            UrlType = UrlType.Other
+            UrlType = UrlType.Other,
+            IsAvpro = avPro
         };
     }
 
     public static async Task<string> TryGetYouTubeVideoId(string url)
     {
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
+
+        var cookieArg = string.Empty;
+        if (ConfigManager.Config.ytdlUseCookies)
+        {
+            cookieArg = "--cookies youtube_cookies.txt";
+        }
+
         var process = new Process
         {
             StartInfo =
             {
                 FileName = ConfigManager.Config.ytdlPath,
-                Arguments = $"--encoding utf-8 --no-playlist --no-warnings {additionalArgs} -j {url}",
+                Arguments = $"--encoding utf-8 --no-playlist --no-warnings {additionalArgs} {cookieArg} -j {url}",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -154,11 +165,17 @@ public class VideoId
             throw new Exception("Failed to get video ID");
         if (data.is_live is true || data.was_live is true)
             throw new Exception("Failed to get video ID: Video is a stream");
-        if (data.duration is null || data.duration > 3600)
+        if (data.duration is null || data.duration > 3600 * 2)
             throw new Exception("Failed to get video ID: Video is too long ");
         
         return data.id;
     }
+
+    // High bitrate video (1080)
+    // https://www.youtube.com/watch?v=DzQwWlbnZvo
+
+    // 4k video
+    // https://www.youtube.com/watch?v=i1csLh-0L9E
 
     public static async Task<string> GetUrl(string url, bool avPro, bool isRetry = false)
     {
@@ -192,7 +209,6 @@ public class VideoId
         }
 
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
-        // var isYouTube = IsYouTubeUrl(url);
         // TODO: safety check for escaping strings
         if (avPro)
         {
