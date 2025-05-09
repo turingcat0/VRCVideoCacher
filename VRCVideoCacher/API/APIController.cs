@@ -15,6 +15,14 @@ public class ApiController : WebApiController
     {
         using var reader = new StreamReader(HttpContext.OpenRequestStream(), Encoding.UTF8);
         var cookies = await reader.ReadToEndAsync();
+        if (!Program.IsCookiesValid(cookies))
+        {
+            Log.Error("Invalid cookies received, maybe you haven't logged in yet, not saving.");
+            HttpContext.Response.StatusCode = 400;
+            await HttpContext.SendStringAsync("Invalid cookies.", "text/plain", Encoding.UTF8);
+            return;
+        }
+        
         var path = Path.Combine(Program.CurrentProcessPath, "youtube_cookies.txt");
         await File.WriteAllTextAsync(path, cookies);
 

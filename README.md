@@ -10,7 +10,7 @@ This is done by replacing VRCs yt-dlp.exe with our own stub yt-dlp, this gets re
 
 ### How to circumvent YouTube bot detection
 
-In order to fix YouTube videos failing to load, you'll need to install our Chrome extension from [here](https://chromewebstore.google.com/detail/vrcvideocacher-cookies-ex/kfgelknbegappcajiflgfbjbdpbpokge) more info [here](https://github.com/clienthax/VRCVideoCacherBrowserExtension), then visit [YouTube.com](https://www.youtube.com) at least once while VRCVideoCacher is running, after VRCVideoCacher has obtained your cookies you can safely uninstall the extension.
+In order to fix YouTube videos failing to load, you'll need to install our Chrome extension from [here](https://chromewebstore.google.com/detail/vrcvideocacher-cookies-ex/kfgelknbegappcajiflgfbjbdpbpokge) more info [here](https://github.com/clienthax/VRCVideoCacherBrowserExtension), then visit [YouTube.com](https://www.youtube.com) while signed in, at least once while VRCVideoCacher is running, after VRCVideoCacher has obtained your cookies you can safely uninstall the extension.
 
 ### VRC still failing to play videos?
 

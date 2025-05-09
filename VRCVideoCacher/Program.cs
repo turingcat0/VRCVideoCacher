@@ -64,9 +64,14 @@ internal static class Program
             return false;
         
         var cookies = File.ReadAllText(cookiesPath);
+        return IsCookiesValid(cookies);
+    }
+
+    public static bool IsCookiesValid(string cookies)
+    {
         if (string.IsNullOrEmpty(cookies))
             return false;
-        
+
         if (cookies.Contains("youtube.com") && cookies.Contains("LOGIN_INFO"))
             return true;
         
