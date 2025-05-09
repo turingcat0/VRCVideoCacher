@@ -160,12 +160,12 @@ public class VideoId
         if (string.IsNullOrEmpty(rawData))
             throw new Exception("Failed to get video ID");
         var data = JsonConvert.DeserializeObject<dynamic>(rawData);
-        if (data is null || data.id is null)
+        if (data is null || data.id is null || data.duration is null)
             throw new Exception("Failed to get video ID");
         if (data.is_live is true)
             throw new Exception("Failed to get video ID: Video is a stream");
-        if (data.duration is null || data.duration > ConfigManager.Config.CacheYouTubeMaxLength)
-            throw new Exception($"Failed to get video ID: Video is longer than configured max length ({data.duration}/{ConfigManager.Config.CacheYouTubeMaxLength})");
+        if (data.duration > ConfigManager.Config.CacheYouTubeMaxLength * 60)
+            throw new Exception($"Failed to get video ID: Video is longer than configured max length ({data.duration / 60}/{ConfigManager.Config.CacheYouTubeMaxLength})");
         
         return data.id;
     }
