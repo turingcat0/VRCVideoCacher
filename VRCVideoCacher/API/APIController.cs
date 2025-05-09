@@ -94,6 +94,9 @@ public class ApiController : WebApiController
             willCache = false;
         }
         
+        if (requestUrl.Contains(".imvrcdn.com"))
+            avPro = false; // pls no villager
+        
         var responseUrl = await VideoId.GetUrl(videoInfo , avPro);
         Log.Information("Responding with URL: {URL}", responseUrl);
         await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);

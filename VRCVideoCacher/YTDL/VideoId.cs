@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -207,7 +207,7 @@ public class VideoId
             cookieArg = "--cookies youtube_cookies.txt";
         
         // TODO: safety check for escaping strings
-        if (avPro && videoInfo.UrlType == UrlType.YouTube)
+        if (avPro)
         {
             process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }
