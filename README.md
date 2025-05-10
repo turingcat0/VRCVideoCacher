@@ -14,7 +14,7 @@ In order to fix YouTube videos failing to load, you'll need to install our Chrom
 
 ### VRC still failing to play videos?
 
-Try install these codecs: [VP9](ms-windows-store://pdp?productid=9n4d0msmp0pt) | [AV1](ms-windows-store://pdp?productid=9mvzqvxjbq9v) | [AC-3](https://github.com/SimonMacer/AnWave/releases/tag/AnWave-Split)
+Try install these codecs: [VP9](https://apps.microsoft.com/detail/9n4d0msmp0pt) | [AV1](https://apps.microsoft.com/detail/9mvzqvxjbq9v) | [AC-3](https://apps.microsoft.com/detail/9nvjqjbdkn97)
 
 ### Are there any risks involved?
 
