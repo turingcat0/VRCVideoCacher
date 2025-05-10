@@ -94,7 +94,7 @@ public class ApiController : WebApiController
             willCache = false;
         }
         
-        if (requestUrl.Contains(".imvrcdn.com"))
+        if (requestUrl.Contains(".imvrcdn.com") || requestUrl.Contains(".illumination.media"))
             avPro = false; // pls no villager
         
         var responseUrl = await VideoId.GetUrl(videoInfo , avPro);
