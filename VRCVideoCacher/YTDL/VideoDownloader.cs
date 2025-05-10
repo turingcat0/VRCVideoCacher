@@ -62,7 +62,7 @@ public class VideoDownloader
     
     public static void QueueDownload(VideoInfo videoInfo)
     {
-        if (DownloadQueue.Any(x => x.VideoUrl == videoInfo.VideoUrl))
+        if (DownloadQueue.Any(x => x.VideoId == videoInfo.VideoId))
         {
             Log.Information("URL is already in the download queue.");
             return;
@@ -146,6 +146,12 @@ public class VideoDownloader
         
         var fileName = $"{videoId}.{videoInfo.DownloadFormat.ToString().ToLower()}";
         var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
+        if (File.Exists(filePath))
+        {
+            Log.Information("File already exists, deleting...");
+            File.Delete(filePath);
+        }
+        
         if (File.Exists(TempDownloadMp4Path))
         {
             File.Move(TempDownloadMp4Path, filePath);
