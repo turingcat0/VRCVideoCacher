@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using System.Net;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using Serilog;
 using VRCVideoCacher.Models;
@@ -13,7 +13,7 @@ public class VideoDownloader
     {
         DefaultRequestHeaders = { { "User-Agent", "VRCVideoCacher" } }
     };
-    private static readonly Queue<VideoInfo> DownloadQueue = new();
+    private static readonly ConcurrentQueue<VideoInfo> DownloadQueue = new();
     private static readonly string TempDownloadMp4Path;
     private static readonly string TempDownloadWebmPath;
     
@@ -29,13 +29,18 @@ public class VideoDownloader
     {
         while (true)
         {
-            if (DownloadQueue.Count == 0)
+            if (DownloadQueue.IsEmpty)
             {
                 Thread.Sleep(100);
                 continue;
             }
 
-            var queueItem = DownloadQueue.Peek();
+            DownloadQueue.TryPeek(out var queueItem);
+            if (queueItem == null)
+            {
+                Thread.Sleep(100);
+                continue;
+            }
             switch (queueItem.UrlType)
             {
                 case UrlType.YouTube:
@@ -56,7 +61,7 @@ public class VideoDownloader
                     throw new ArgumentOutOfRangeException();
             }
 
-            DownloadQueue.Dequeue();
+            DownloadQueue.TryDequeue(out _);
         }
     }
     
@@ -119,18 +124,17 @@ public class VideoDownloader
         if (videoInfo.DownloadFormat == DownloadFormat.Webm)
         {
             // process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadMp4Path} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec!=av01][vcodec!=vp9.2][protocol^=http]\" --no-playlist --remux-video mp4 --no-progress {cookieArg} {additionalArgs} -- {videoId}";
-            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadWebmPath} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^av01'][ext=mp4][dynamic_range='SDR']+ba[acodec=opus][ext=webm]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='vp9'][ext=webm][dynamic_range='SDR']+ba[acodec=opus][ext=webm]\" --no-playlist --no-progress {cookieArg} {additionalArgs} -- {videoId}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadWebmPath} -f \"bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='^av01'][ext=mp4][dynamic_range='SDR']+ba[acodec=opus][ext=webm]/bv*[height<={ConfigManager.Config.CacheYouTubeMaxResolution}][vcodec~='vp9'][ext=webm][dynamic_range='SDR']+ba[acodec=opus][ext=webm]\" --no-mtime --no-playlist --no-progress {cookieArg} {additionalArgs} -- {videoId}";
         }
         else
         {
             // Potato mode.
-            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadMp4Path} -f \"bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http]\" --no-playlist --remux-video mp4 --no-progress {cookieArg} {additionalArgs} -- {videoId}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -q -o {TempDownloadMp4Path} -f \"bv*[height<=1080][vcodec~='^(avc|h264)']+ba[ext=m4a]/bv*[height<=1080][vcodec!=av01][vcodec!=vp9.2][protocol^=http]\" --no-mtime --no-playlist --remux-video mp4 --no-progress {cookieArg} {additionalArgs} -- {videoId}";
             // $@"-f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings {url} " %(id)s.%(ext)s
         }
 
         process.Start();
         await process.WaitForExitAsync();
-        var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
         error = error.Trim();
         if (process.ExitCode != 0)
@@ -141,7 +145,6 @@ public class VideoDownloader
             
             return;
         }
-
         Thread.Sleep(10);
         
         var fileName = $"{videoId}.{videoInfo.DownloadFormat.ToString().ToLower()}";
@@ -166,6 +169,7 @@ public class VideoDownloader
             return;
         }
 
+        CacheManager.AddToCache(fileName);
         Log.Information("YouTube Video Downloaded: {URL}", $"{ConfigManager.Config.ytdlWebServerURL}{fileName}");
     }
     
