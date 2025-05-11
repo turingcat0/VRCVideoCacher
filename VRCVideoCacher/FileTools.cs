@@ -16,6 +16,12 @@ public class FileTools
     
     public static void BackupAndReplaceYtdl()
     {
+        var dir = Path.GetDirectoryName(YtdlPath);
+        if (!Directory.Exists(dir))
+        {
+            Log.Error("YT-DLP directory does not exist, VRChat may not be installed.");
+            return;
+        }
         if (File.Exists(YtdlPath))
         {
             var hash = Program.ComputeBinaryContentHash(File.ReadAllBytes(YtdlPath));
