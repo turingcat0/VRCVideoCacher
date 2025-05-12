@@ -13,6 +13,10 @@ public class WebServer
     
     public static void Init()
     {
+        var indexPath = Path.Combine(ConfigManager.Config.CachedAssetPath, "index.html");
+        if (!File.Exists(indexPath))
+            File.WriteAllText(indexPath, "VRCVideoCacher");
+        
         if (!ConfigManager.Config.ytdlWebServerURL.Contains("localhost") &&
             !ConfigManager.Config.ytdlWebServerURL.Contains("127.0.0.1"))
         {
