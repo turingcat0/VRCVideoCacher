@@ -8,13 +8,11 @@ VRCVideoCacher is a tool used to cache VRChat videos to your local disk and fix 
 
 This is done by replacing VRCs yt-dlp.exe with our own stub yt-dlp, this gets replaced on application startup and is restored on exit.
 
+Auto install missing codecs: [VP9](https://apps.microsoft.com/detail/9n4d0msmp0pt) | [AV1](https://apps.microsoft.com/detail/9mvzqvxjbq9v) | [AC-3](https://apps.microsoft.com/detail/9nvjqjbdkn97)
+
 ### How to circumvent YouTube bot detection
 
 In order to fix YouTube videos failing to load, you'll need to install our Chrome extension from [here](https://chromewebstore.google.com/detail/vrcvideocacher-cookies-ex/kfgelknbegappcajiflgfbjbdpbpokge) more info [here](https://github.com/clienthax/VRCVideoCacherBrowserExtension), then visit [YouTube.com](https://www.youtube.com) while signed in, at least once while VRCVideoCacher is running, after VRCVideoCacher has obtained your cookies you can safely uninstall the extension.
-
-### VRC still failing to play videos?
-
-Try install these codecs: [VP9](https://apps.microsoft.com/detail/9n4d0msmp0pt) | [AV1](https://apps.microsoft.com/detail/9mvzqvxjbq9v) | [AC-3](https://apps.microsoft.com/detail/9nvjqjbdkn97)
 
 ### Are there any risks involved?
 
