@@ -227,7 +227,7 @@ public class VideoId
         
         if (process.ExitCode != 0)
         {
-            Log.Error("YouTube Get URL: {error}", error);
+            Log.Error("Get URL: {error}", error);
             if (error.Contains("Sign in to confirm you’re not a bot"))
                 Log.Error("Fix this error by following these instructions: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
             

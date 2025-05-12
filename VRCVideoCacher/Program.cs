@@ -52,6 +52,7 @@ internal static class Program
             Log.Warning("No cookies found, please use the browser extension to send cookies or disable \"ytdlUseCookies\" in config.");
 
         CacheManager.Init();
+        await WinGet.TryInstallPackages();
         
         await Task.Delay(-1);
     }
