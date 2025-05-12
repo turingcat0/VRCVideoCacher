@@ -206,10 +206,14 @@ public class VideoId
         if (Program.IsCookiesEnabledAndValid() && videoInfo.UrlType == UrlType.YouTube)
             cookieArg = "--cookies youtube_cookies.txt";
         
+        var languageArg = string.IsNullOrEmpty(ConfigManager.Config.ytdlDubLanguage)
+            ? string.Empty
+            : $"[language={ConfigManager.Config.ytdlDubLanguage}]/(mp4/best)[height<=?1080][height>=?64][width>=?64]";
+        
         // TODO: safety check for escaping strings
         if (avPro)
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64] --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64]{languageArg} --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
         }
         else
         {
