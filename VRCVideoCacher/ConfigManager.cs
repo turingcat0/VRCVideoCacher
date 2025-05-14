@@ -25,6 +25,10 @@ public class ConfigManager
         }
         Log.Information("Loaded config.");
         TrySaveConfig();
+        if (!string.IsNullOrEmpty(Config.CachedAssetPath))
+            Directory.CreateDirectory(Config.CachedAssetPath);
+        else
+            Log.Error("Invalid CachedAssetPath path.");
     }
 
     private static void TrySaveConfig()

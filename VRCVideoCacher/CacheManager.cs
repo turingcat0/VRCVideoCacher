@@ -11,7 +11,6 @@ public class CacheManager
 
     static CacheManager()
     {
-        Directory.CreateDirectory(ConfigManager.Config.CachedAssetPath);
         BuildCache();
     }
     

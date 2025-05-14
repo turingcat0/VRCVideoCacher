@@ -25,6 +25,11 @@ public class YtdlManager
     {
         Log.Information("Checking for YT-DLP updates...");
         var response = await HttpClient.GetAsync(YtdlpApiUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            Log.Warning("Failed to check for YT-DLP updates.");
+            return;
+        }
         var data = await response.Content.ReadAsStringAsync();
         var json = JsonConvert.DeserializeObject<YtApi>(data);
         if (json == null)
@@ -38,31 +43,42 @@ public class YtdlManager
         if (string.IsNullOrEmpty(currentYtdlVersion))
             currentYtdlVersion = "Not Installed";
         
-        Log.Information($"YT-DLP latest version is {json.tag_name} Current Installed version is {currentYtdlVersion}");
+        var latestVersion = json.tag_name;
+        Log.Information("YT-DLP latest version: {Latest} Current version: {Installed}", latestVersion, currentYtdlVersion);
+        if (string.IsNullOrEmpty(latestVersion))
+        {
+            Log.Warning("Failed to check for YT-DLP updates.");
+            return;
+        }
         if (!File.Exists(ConfigManager.Config.ytdlPath))
         {
             Log.Information("YT-DLP is not installed. Downloading...");
             await DownloadYtdl(json);
             await File.WriteAllTextAsync(YtdlVersionPath, json.tag_name);
+            return;
         }
-        else if (currentYtdlVersion != json.tag_name)
+        if (currentYtdlVersion == latestVersion)
+        {
+            Log.Information("YT-DLP is up to date.");
+        }
+        else
         {
             Log.Information("YT-DLP is outdated. Updating...");
             await DownloadYtdl(json);
             await File.WriteAllTextAsync(YtdlVersionPath, json.tag_name);
         }
-        else
-        {
-            Log.Information("YT-DLP is up to date.");
-        }
     }
     
     public static async Task TryDownloadFfmpeg()
     {
+        var utilsPath = Path.GetDirectoryName(ConfigManager.Config.ytdlPath);
+        if (string.IsNullOrEmpty(utilsPath))
+            throw new Exception("Failed to get YT-DLP path");
         if (!ConfigManager.Config.CacheYouTube ||
-            File.Exists(Path.Combine(Program.CurrentProcessPath, "Utils", "ffmpeg.exe")))
+            File.Exists(Path.Combine(utilsPath, "ffmpeg.exe")))
             return;
         
+        Directory.CreateDirectory(utilsPath);
         Log.Information("Downloading FFmpeg...");
         using var response = await HttpClient.GetAsync(FfmpegUrl);
         if (!response.IsSuccessStatusCode)
@@ -86,7 +102,7 @@ public class YtdlManager
         foreach (var ffmpegFile in ffmpegFiles)
         {
             var fileName = Path.GetFileName(ffmpegFile);
-            var destPath = Path.Combine(Program.CurrentProcessPath, "Utils", fileName);
+            var destPath = Path.Combine(utilsPath, fileName);
             if (File.Exists(destPath))
                 File.Delete(destPath);
             File.Move(ffmpegFile, destPath);
