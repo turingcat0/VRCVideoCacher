@@ -23,10 +23,6 @@ public class WinGet
             Log.Information("Installing missing codec packages...");
             await InstallAllPackages();
         }
-        else
-        {
-            Log.Information("Codec packages are already installed.");
-        }
     }
 
     private static bool IsOurPackagesInstalled()
@@ -43,6 +39,7 @@ public class WinGet
                 return false;
         }
 
+        Log.Information("Codec packages are already installed.");
         return true;
     }
 
