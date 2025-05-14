@@ -24,6 +24,10 @@ internal static class Program
                 "[{@t:HH:mm:ss} {@l:u3} {Coalesce(Substring(SourceContext, LastIndexOf(SourceContext, '.') + 1),'<none>')}] {@m}\n{@x}",
                 theme: TemplateTheme.Literate))
             .CreateLogger();
+        const string elly = "Elly";
+        const string natsumi = "Natsumi";
+        const string haxy = "Haxy";
+        Logger.Information("VRCVideoCacher version {Version} created by {Elly}, {Natsumi}, {Haxy}", Version, elly, natsumi, haxy);
 
         await Updater.CheckForUpdates();
         Updater.Cleanup();
