@@ -87,6 +87,7 @@ public class ConfigModel
     public bool ytdlUseCookies = true;
     public string ytdlAdditionalArgs = string.Empty;
     public string ytdlDubLanguage = string.Empty;
+    public int ytdlDelay = 8;
     public string CachedAssetPath = "CachedAssets";
     public string[] BlockedUrls = new[] { "https://na2.vrdancing.club/sampleurl.mp4" };
     public bool CacheYouTube = true;

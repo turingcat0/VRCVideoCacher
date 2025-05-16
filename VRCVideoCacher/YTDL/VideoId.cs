@@ -22,7 +22,7 @@ public class VideoId
     {
         try
         {
-            var uri = new Uri(url.Trim());
+            var uri = new Uri(url);
             return YouTubeHosts.Contains(uri.Host);
         }
         catch
@@ -210,7 +210,6 @@ public class VideoId
             ? string.Empty
             : $"[language={ConfigManager.Config.ytdlDubLanguage}]/(mp4/best)[height<=?1080][height>=?64][width>=?64]";
         
-        // TODO: safety check for escaping strings
         if (avPro)
         {
             process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64]{languageArg} --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
@@ -226,6 +225,12 @@ public class VideoId
         var error = await process.StandardError.ReadToEndAsync();
         error = error.Trim();
         await process.WaitForExitAsync();
+
+        if (videoInfo.UrlType == UrlType.YouTube && ConfigManager.Config.ytdlDelay > 0)
+        {
+            Log.Information("Delaying YouTube URL response for configured {delay} seconds, this can help with video errors, don't ask why", ConfigManager.Config.ytdlDelay);
+            await Task.Delay(ConfigManager.Config.ytdlDelay * 1000);
+        }
         
         Log.Information("Started yt-dlp with args: {args}", process.StartInfo.Arguments);
         
