@@ -29,18 +29,14 @@ public class VideoDownloader
     {
         while (true)
         {
+            Thread.Sleep(100);
             if (DownloadQueue.IsEmpty)
-            {
-                Thread.Sleep(100);
                 continue;
-            }
 
             DownloadQueue.TryPeek(out var queueItem);
             if (queueItem == null)
-            {
-                Thread.Sleep(100);
                 continue;
-            }
+            
             switch (queueItem.UrlType)
             {
                 case UrlType.YouTube:
@@ -159,8 +155,19 @@ public class VideoDownloader
         var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
         if (File.Exists(filePath))
         {
-            Log.Information("File already exists, deleting...");
-            File.Delete(filePath);
+            Log.Error("File already exists, canceling...");
+            try
+            {
+                if (File.Exists(TempDownloadMp4Path))
+                    File.Delete(TempDownloadMp4Path);
+                if (File.Exists(TempDownloadWebmPath))
+                    File.Delete(TempDownloadWebmPath);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Failed to delete temp file: {ex}", ex.Message);
+            }
+            return;
         }
         
         if (File.Exists(TempDownloadMp4Path))

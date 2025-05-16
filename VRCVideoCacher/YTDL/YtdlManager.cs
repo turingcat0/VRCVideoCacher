@@ -88,6 +88,8 @@ public class YtdlManager
         }
         
         var filePath = Path.Combine(Program.CurrentProcessPath, Path.GetFileName(FfmpegUrl));
+        if (File.Exists(filePath))
+            File.Delete(filePath);
         var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
         await response.Content.CopyToAsync(fileStream);
         fileStream.Close();

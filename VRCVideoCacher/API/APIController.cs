@@ -52,19 +52,8 @@ public class ApiController : WebApiController
             Log.Information("Failed to get Video Info for URL: {URL}", requestUrl);
             return;
         }
-        var ext = avPro ? "webm" : "mp4";
-        var fileName = $"{videoInfo.VideoId}.{ext}";
-        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
-        var isCached = File.Exists(filePath);
-        if (avPro && !isCached)
-        {
-            // retry with .mp4
-            fileName = $"{videoInfo.VideoId}.mp4";
-            filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
-            isCached = File.Exists(filePath);
-        }
 
-        var willCache = true;
+        var (isCached, filePath, fileName) = GetCachedFile(videoInfo.VideoId, avPro);
         if (isCached)
         {
             File.SetLastWriteTimeUtc(filePath, DateTime.UtcNow);
@@ -77,7 +66,8 @@ public class ApiController : WebApiController
         if (string.IsNullOrEmpty(videoInfo.VideoId))
         {
             Log.Information("Failed to get Video ID: Bypassing.");
-            willCache = false;
+            await HttpContext.SendStringAsync(string.Empty, "text/plain", Encoding.UTF8);
+            return;
         }
 
         if (ConfigManager.Config.BlockedUrls.Contains(requestUrl))
@@ -92,7 +82,8 @@ public class ApiController : WebApiController
         if (requestUrl.StartsWith("https://mightygymcdn.nyc3.cdn.digitaloceanspaces.com"))
         {
             Log.Information("URL Is Mighty Gym: Bypassing.");
-            willCache = false;
+            await HttpContext.SendStringAsync(string.Empty, "text/plain", Encoding.UTF8);
+            return;
         }
         
         if (requestUrl.Contains(".imvrcdn.com") || requestUrl.Contains(".illumination.media"))
@@ -101,9 +92,25 @@ public class ApiController : WebApiController
         var responseUrl = await VideoId.GetUrl(videoInfo , avPro);
         Log.Information("Responding with URL: {URL}", responseUrl);
         await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);
-        if (willCache)
-        {
+        // check if file is cached again to handle race condition
+        (isCached, _, _) = GetCachedFile(videoInfo.VideoId, avPro);
+        if (!isCached)
             VideoDownloader.QueueDownload(videoInfo);
+    }
+
+    private static (bool isCached, string filePath, string fileName) GetCachedFile(string videoId, bool avPro)
+    {
+        var ext = avPro ? "webm" : "mp4";
+        var fileName = $"{videoId}.{ext}";
+        var filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
+        var isCached = File.Exists(filePath);
+        if (avPro && !isCached)
+        {
+            // retry with .mp4
+            fileName = $"{videoId}.mp4";
+            filePath = Path.Combine(ConfigManager.Config.CachedAssetPath, fileName);
+            isCached = File.Exists(filePath);
         }
+        return (isCached, filePath, fileName);
     }
 }
