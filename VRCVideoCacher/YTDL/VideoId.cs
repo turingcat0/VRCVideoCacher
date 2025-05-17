@@ -142,7 +142,7 @@ public class VideoId
             StartInfo =
             {
                 FileName = ConfigManager.Config.ytdlPath,
-                Arguments = $"--encoding utf-8 --no-playlist --no-warnings {additionalArgs} {cookieArg} -j {url}",
+                Arguments = $"--encoding utf-8 --no-playlist --no-warnings {additionalArgs} {cookieArg} -j \"{url}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -178,9 +178,8 @@ public class VideoId
 
     public static async Task<Tuple<string, bool>> GetUrl(VideoInfo videoInfo, bool avPro)
     {
-        var url = videoInfo.VideoUrl;
         // if url contains "results?" then it's a search
-        if (url.Contains("results?"))
+        if (videoInfo.VideoUrl.Contains("results?") && videoInfo.UrlType == UrlType.YouTube)
         {
             const string message = "URL is a search query, cannot get video URL.";
             return new Tuple<string, bool>(message, false);
@@ -201,6 +200,7 @@ public class VideoId
         };
 
         // yt-dlp -f best/bestvideo[height<=?720]+bestaudio --no-playlist --no-warnings --get-url https://youtu.be/GoSo8YOKSAE
+        var url = videoInfo.VideoUrl;
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
         if (Program.IsCookiesEnabledAndValid() && videoInfo.UrlType == UrlType.YouTube)
@@ -212,11 +212,11 @@ public class VideoId
         
         if (avPro)
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64]{languageArg} --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[height<=?1080][height>=?64][width>=?64]{languageArg} --impersonate=\"safari\" --extractor-args=\"youtube:player_client=web\" --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url \"{url}\"";
         }
         else
         {
-            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url {url}";
+            process.StartInfo.Arguments = $"--encoding utf-8 -f (mp4/best)[vcodec!=av01][vcodec!=vp9.2][height<=?1080][height>=?64][width>=?64][protocol^=http] --no-playlist --no-warnings {cookieArg} {additionalArgs} --get-url \"{url}\"";
         }
         
         process.Start();
