@@ -176,14 +176,14 @@ public class VideoId
     // 4k video
     // https://www.youtube.com/watch?v=i1csLh-0L9E
 
-    public static async Task<string> GetUrl(VideoInfo videoInfo, bool avPro)
+    public static async Task<Tuple<string, bool>> GetUrl(VideoInfo videoInfo, bool avPro)
     {
         var url = videoInfo.VideoUrl;
         // if url contains "results?" then it's a search
         if (url.Contains("results?"))
         {
-            Log.Error("URL is a search query, cannot get video URL.");
-            return string.Empty;
+            const string message = "URL is a search query, cannot get video URL.";
+            return new Tuple<string, bool>(message, false);
         }
 
         var process = new Process
@@ -225,24 +225,22 @@ public class VideoId
         var error = await process.StandardError.ReadToEndAsync();
         error = error.Trim();
         await process.WaitForExitAsync();
+        Log.Information("Started yt-dlp with args: {args}", process.StartInfo.Arguments);
+        
+        if (process.ExitCode != 0)
+        {
+            if (error.Contains("Sign in to confirm you’re not a bot"))
+                Log.Error("Fix this error by following these instructions: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
 
+            return new Tuple<string, bool>(error, false);
+        }
+        
         if (videoInfo.UrlType == UrlType.YouTube && ConfigManager.Config.ytdlDelay > 0)
         {
             Log.Information("Delaying YouTube URL response for configured {delay} seconds, this can help with video errors, don't ask why", ConfigManager.Config.ytdlDelay);
             await Task.Delay(ConfigManager.Config.ytdlDelay * 1000);
         }
-        
-        Log.Information("Started yt-dlp with args: {args}", process.StartInfo.Arguments);
-        
-        if (process.ExitCode != 0)
-        {
-            Log.Error("Get URL: {error}", error);
-            if (error.Contains("Sign in to confirm you’re not a bot"))
-                Log.Error("Fix this error by following these instructions: https://github.com/clienthax/VRCVideoCacherBrowserExtension");
-            
-            return string.Empty;
-        }
 
-        return output;
+        return new Tuple<string, bool>(output, true);
     }
 }

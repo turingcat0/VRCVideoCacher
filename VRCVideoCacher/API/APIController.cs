@@ -2,6 +2,7 @@ using System.Text;
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
+using VRCVideoCacher.Models;
 using VRCVideoCacher.YTDL;
 
 namespace VRCVideoCacher.API;
@@ -89,9 +90,22 @@ public class ApiController : WebApiController
         if (requestUrl.Contains(".imvrcdn.com") || requestUrl.Contains(".illumination.media"))
             avPro = false; // pls no villager
         
-        var responseUrl = await VideoId.GetUrl(videoInfo , avPro);
-        Log.Information("Responding with URL: {URL}", responseUrl);
-        await HttpContext.SendStringAsync(responseUrl, "text/plain", Encoding.UTF8);
+        var (response, success) = await VideoId.GetUrl(videoInfo, avPro);
+        if (!success)
+        {
+            Log.Error("Get URL: {error}", response);
+            // only send the error back if it's for YouTube, otherwise let it play the request URL normally
+            if (videoInfo.UrlType == UrlType.YouTube)
+            {
+                HttpContext.Response.StatusCode = 500;
+                await HttpContext.SendStringAsync(response, "text/plain", Encoding.UTF8);
+                return;
+            }
+            response = string.Empty;
+        }
+        
+        Log.Information("Responding with URL: {URL}", response);
+        await HttpContext.SendStringAsync(response, "text/plain", Encoding.UTF8);
         // check if file is cached again to handle race condition
         (isCached, _, _) = GetCachedFile(videoInfo.VideoId, avPro);
         if (!isCached)
