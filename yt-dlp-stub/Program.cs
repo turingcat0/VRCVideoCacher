@@ -1,4 +1,6 @@
-﻿namespace yt_dlp;
+﻿using System.Net.Sockets;
+
+namespace yt_dlp;
 
 internal static class Program
 {
@@ -7,8 +9,15 @@ internal static class Program
 
     private static void WriteLog(string message)
     {
-        using var sw = new StreamWriter(_logFilePath, true);
-        sw.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}");
+        try
+        {
+            using var sw = new StreamWriter(_logFilePath, true);
+            sw.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}");
+        }
+        catch (Exception)
+        {
+            // ignore
+        }
     }
 
     public static async Task Main(string[] args)
@@ -52,8 +61,12 @@ internal static class Program
             if (!response.IsSuccessStatusCode)
                 throw new Exception(output);
             Console.WriteLine(output);
-            if (!output.Trim().StartsWith("http"))
-                throw new Exception($"Invalid response from server: {output}");
+        }
+        catch (HttpRequestException ex) when (ex.InnerException is SocketException socketEx && socketEx.SocketErrorCode == SocketError.ConnectionRefused)
+        {
+            WriteLog("[Error] Connection refused. Is the server running?");
+            await Console.Error.WriteLineAsync("ERROR: [VRCVideoCacher] Connection refused. Is VRCVideoCacher running?");
+            Environment.ExitCode = 1;
         }
         catch (Exception ex)
         {
