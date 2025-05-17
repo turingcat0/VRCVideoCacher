@@ -53,7 +53,7 @@ internal static class Program
         _ = YtdlManager.TryDownloadFfmpeg();
 
         if (ConfigManager.Config.ytdlUseCookies && !IsCookiesEnabledAndValid())
-            Log.Warning("No cookies found, please use the browser extension to send cookies or disable \"ytdlUseCookies\" in config.");
+            Logger.Warning("No cookies found, please use the browser extension to send cookies or disable \"ytdlUseCookies\" in config.");
 
         CacheManager.Init();
         await WinGet.TryInstallPackages();

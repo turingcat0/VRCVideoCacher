@@ -20,11 +20,11 @@ From VRC or EAC? no.
 
 From YouTube/Google? maybe, we strongly recommend you use an alternative Google account if possible.
 
-### YouTube videos take too long to load or sometimes fail to play
+### "Loading failed. File not found, codec not supported, video resolution too high or insufficient system resources."
 
-Speed up slow load times by setting `ytdlDelay` to 0.
+Sync system time, Open Windows Settings -> Time & Language -> Date & Time, under "Additional settings" click "Sync now"
 
-Fix YouTube sometimes failing to load by increasing `ytdlDelay` to something like `10` seconds.
+Set `ytdlDelay` to something like `10` seconds.
 
 ### Config Options
 
@@ -33,7 +33,7 @@ Fix YouTube sometimes failing to load by increasing `ytdlDelay` to something lik
 | ytdlAdditionalArgs        | Add your own [yt-dlp args](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options)                                                                                                                                            |
 | ytdlUseCookies            | Uses the [companion extension](https://github.com/clienthax/VRCVideoCacherBrowserExtension) for cookies, this is used to circumvent YouTubes bot detection.                                                                                  |
 | ytdlDubLanguage           | Set preferred audio language for AVPro and cached videos, e.g. `de` for German, check list of [supported lang codes](https://github.com/yt-dlp/yt-dlp/blob/c26f9b991a0681fd3ea548d535919cec1fbbd430/yt_dlp/extractor/youtube.py#L381-L390)   |
-| ytdlDelay                 | No delay `0`, Default `8`, for some unknown reason YouTube videos can sometimes fail to load in-game for some people without this delay.                                                                                                     |
+| ytdlDelay                 | No delay (Default) `0`, YouTube videos can fail to load in-game without this delay.                                                                                                                                                          |
 | CachedAssetPath           | Location to store downloaded videos, e.g. store videos on separate drive with `D:\\DownloadedVideos`                                                                                                                                         |
 | BlockedUrls               | List of URLs to never load in VRC.                                                                                                                                                                                                           |
 | CacheYouTube              | Download YouTube videos to `CachedAssets` to improve load times next time the video plays.                                                                                                                                                   |

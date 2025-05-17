@@ -38,7 +38,7 @@ public class ApiController : WebApiController
     [Route(HttpVerbs.Get, "/getvideo")]
     public async Task GetVideo()
     {
-        var requestUrl = Request.QueryString["url"];
+        var requestUrl = Request.QueryString["url"]?.Trim();
         var avPro = string.Compare(Request.QueryString["avpro"], "true", StringComparison.OrdinalIgnoreCase) == 0;
         if (string.IsNullOrEmpty(requestUrl))
         {
