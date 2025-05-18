@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Serilog;
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 
@@ -25,10 +25,21 @@ public class ConfigManager
         }
         Log.Information("Loaded config.");
         TrySaveConfig();
-        if (!string.IsNullOrEmpty(Config.CachedAssetPath))
-            Directory.CreateDirectory(Config.CachedAssetPath);
-        else
-            Log.Error("Invalid CachedAssetPath path.");
+
+        try
+        {
+            if (!string.IsNullOrEmpty(Config.CachedAssetPath))
+                Directory.CreateDirectory(Config.CachedAssetPath);
+            else
+                Log.Error("Invalid CachedAssetPath path.");
+
+            var filePath = Path.Combine(Path.GetDirectoryName(FileTools.YtdlPath)!, "localhost.txt");
+            File.WriteAllText(filePath, Config.ytdlWebServerURL);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to create CachedAssetPath directory or localhost.txt file.");
+        }
     }
 
     private static void TrySaveConfig()

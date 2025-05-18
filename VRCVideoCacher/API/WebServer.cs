@@ -1,4 +1,4 @@
-﻿using EmbedIO;
+using EmbedIO;
 using EmbedIO.Files;
 using EmbedIO.WebApi;
 using Swan.Logging;
@@ -17,12 +17,6 @@ public class WebServer
         if (!File.Exists(indexPath))
             File.WriteAllText(indexPath, "VRCVideoCacher");
         
-        if (!ConfigManager.Config.ytdlWebServerURL.Contains("localhost") &&
-            !ConfigManager.Config.ytdlWebServerURL.Contains("127.0.0.1"))
-        {
-            Log.Warning("WebServer in config isn't localhost, not starting local WebServer.");
-            return;
-        }
         _server = CreateWebServer(ConfigManager.Config.ytdlWebServerURL);
         _server.RunAsync();  
     }

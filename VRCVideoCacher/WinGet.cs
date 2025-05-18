@@ -8,7 +8,7 @@ public class WinGet
 {
     private static readonly ILogger Log = Program.Logger.ForContext<WinGet>();
     private const string WingetExe = "winget.exe";
-    private static readonly Dictionary<string, string> _wingetPackages = new()
+    private static readonly Dictionary<string, string> WingetPackages = new()
     {
         { "VP9 Video Extensions", "9n4d0msmp0pt" },
         { "AV1 Video Extension", "9mvzqvxjbq9v" },
@@ -33,7 +33,7 @@ public class WinGet
             Log.Warning("Failed to get installed winget packages.");
             return true;
         }
-        foreach (var package in _wingetPackages.Keys)
+        foreach (var package in WingetPackages.Keys)
         {
             if (!installedPackages.Contains(package))
                 return false;
@@ -86,7 +86,7 @@ public class WinGet
 
     private static async Task InstallAllPackages()
     {
-        foreach (var package in _wingetPackages.Values)
+        foreach (var package in WingetPackages.Values)
         {
             await InstallPackage(package);
         }
@@ -122,7 +122,7 @@ public class WinGet
             if (process.ExitCode != 0 && !string.IsNullOrEmpty(error))
                 throw new Exception($"Installation failed with exit code {process.ExitCode}. Error: {error}");
             
-            var packageName = _wingetPackages.FirstOrDefault(x => x.Value == packageId).Key;
+            var packageName = WingetPackages.FirstOrDefault(x => x.Value == packageId).Key;
             if (process.ExitCode == 0)
                 Log.Information("Successfully installed package: {packageName}", packageName);
         }

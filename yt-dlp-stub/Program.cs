@@ -5,7 +5,7 @@ namespace yt_dlp;
 internal static class Program
 {
     private static string _logFilePath = string.Empty;
-    private const string BaseUrl = "http://localhost:9696";
+    private static string _baseUrl = "http://localhost:9696";
 
     private static void WriteLog(string message)
     {
@@ -22,7 +22,16 @@ internal static class Program
 
     public static async Task Main(string[] args)
     {
-        _logFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "Low", @"VRChat\VRChat\Tools", "ytdl.log");
+        var appDataPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "Low", @"VRChat\VRChat\Tools");
+        _logFilePath = Path.Combine(appDataPath, "ytdl.log");
+        var domainPath = Path.Combine(appDataPath, "localhost.txt");
+        if (File.Exists(domainPath))
+        {
+            var contents = (await File.ReadAllTextAsync(domainPath)).Trim();
+            if (!string.IsNullOrEmpty(contents))
+                _baseUrl = contents;
+        }
         
         var url = string.Empty;
         var avPro = true;
@@ -55,7 +64,7 @@ internal static class Program
         {
             using var httpClient = new HttpClient();
             var inputUrl = Uri.EscapeDataString(url);
-            var response = await httpClient.GetAsync($"{BaseUrl}/api/getvideo?url={inputUrl}&avpro={avPro}");
+            var response = await httpClient.GetAsync($"{_baseUrl}/api/getvideo?url={inputUrl}&avpro={avPro}");
             var output = await response.Content.ReadAsStringAsync();
             WriteLog($"[Response] {output}");
             if (!response.IsSuccessStatusCode)

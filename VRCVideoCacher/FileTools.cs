@@ -5,7 +5,7 @@ namespace VRCVideoCacher;
 public class FileTools
 {
     private static readonly ILogger Log = Program.Logger.ForContext<FileTools>();
-    private static readonly string YtdlPath;
+    public static readonly string YtdlPath;
     private static readonly string BackupPath;
 
     static FileTools()
