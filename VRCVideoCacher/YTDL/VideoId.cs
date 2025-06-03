@@ -220,7 +220,12 @@ public class VideoId
         var additionalArgs = ConfigManager.Config.ytdlAdditionalArgs;
         var cookieArg = string.Empty;
         if (Program.IsCookiesEnabledAndValid() && videoInfo.UrlType == UrlType.YouTube)
-            cookieArg = "--cookies youtube_cookies.txt";
+        {
+            var appDirectory = AppContext.BaseDirectory;
+            cookieArg = $"--cookies \"{Path.Combine(appDirectory, "youtube_cookies.txt")}\"";
+        }
+
+
 
         var languageArg = string.IsNullOrEmpty(ConfigManager.Config.ytdlDubLanguage)
             ? string.Empty
